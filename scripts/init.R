@@ -57,6 +57,26 @@ gg_df_fcast <- function(x, t_back) {
 }
 
 
+gg_df_bvar <- function(x) {
+
+  out <- as.data.frame.table(x[["data"]])
+  names(out) <- c("chain", "vars", "value")
+  out[["chain"]] <- 1
+
+  for(ll in seq_len(length(x[["chains"]]))) {
+    temp <- as.data.frame.table(x[["chains"]][[ll]])
+    names(temp) <- c("chain", "vars", "value")
+    temp[["chain"]] <- ll + 1
+    out <- rbind(out, temp)
+  }
+  out[["chain"]] <- factor(out[["chain"]])
+  out[["x_axis"]] <- seq_len(nrow(x[["data"]]))
+
+  return(out)
+}
+
+
+
 irf_plot_gg <- function(
   x,
   vars_response = NULL,
@@ -201,9 +221,93 @@ fcast_plot_gg <- function(
   return(p)
 }
 
-bvar_plot_gg <- function(x, type, vars, vars_response, vars_impulse, chains, ...) {
+bvar_plot_gg <- function(
+  x,
+  type = c("full", "trace", "density", "irf", "fcast"),
+  vars = NULL,
+  vars_response = NULL,
+  vars_impulse = NULL,
+  chains = list(),
+  ...) {
 
+  if(!inherits(x, "bvar")) {
+    if(inherits(x[[1]], "bvar")) { # Allow chains to x
+      chains <- x
+      x <- x[[1]]
+      chains[[1]] <- NULL
+    } else {stop("Please provide a `bvar` object.")}
+  }
 
+  type <- match.arg(type)
+
+  # Forward and return if "irf" or "fcast"
+  if(type == "irf") {
+    if(is.null(x[["irf"]])) {message("No `bvar_irf` found. Calculating...")}
+    return(irf_plot_gg(
+      irf(x), vars_response = vars_response, vars_impulse = vars_impulse,
+      variables = x[["variables"]], ...))
+  }
+  if(type == "fcast") {
+    if(is.null(x[["fcast"]])) {message("No `bvar_fcast` found. Calculating...")}
+    return(fcast_plot_gg(
+      predict(x), vars = vars, variables = x[["variables"]], ...))
+  }
+
+  if(inherits(chains, "bvar")) {chains <- list(chains)}
+  lapply(chains, function(x) {if(!inherits(x, "bvar")) {
+    stop("Please provide `bvar` objects to the chains parameter.")
+  }})
+
+  prep <- prep_data(x,
+            vars = vars, vars_response = vars_response, vars_impulse = vars_impulse,
+            chains, check_chains = FALSE)
+  df <- gg_df_bvar(prep)
+
+  plot_list <- list()
+
+  if(type != "density") {
+    p_trace <- ggplot(df, aes(y = value, x = x_axis)) +
+      labs(x = NULL, y = NULL) +
+      theme_bw() +
+      theme(strip.background = element_blank()) +
+      facet_wrap(.~vars, scales = "free",
+                 ncol = ifelse(orientation == "horizontal",
+                               length(unique(df[["vars"]])),
+                               1)) +
+      scale_x_continuous(expand = c(0, 0)) +
+      theme(legend.position = "bottom")
+
+    if(length(prep[["chains"]]) == 0) {
+      p_trace <- p_trace + geom_line()
+    } else {
+      p_trace <- p_trace + geom_line(aes(color = chain), alpha = 0.5)
+    }
+
+    plot_list[["trace"]] <- p_trace
+  }
+
+  if(type != "trace") {
+
+    p_dens <- ggplot(df, aes(x = value)) +
+      labs(x = NULL, y = NULL) +
+      theme_bw() +
+      theme(strip.background = element_blank()) +
+      facet_wrap(.~vars, scales = "free",
+                 ncol = ifelse(orientation == "horizontal",
+                               length(unique(df[["vars"]])),
+                               1)) +
+      theme(legend.position = "bottom")
+
+    if(length(prep[["chains"]]) == 0) {
+      p_dens <- p_dens + geom_density(fill = "grey", alpha = 0.5)
+    } else {
+      p_dens <- p_dens + geom_density(aes(color = chain, fill = chain), alpha = 0.5)
+    }
+
+    plot_list[["dens"]] <- p_dens
+  }
+
+  return(cowplot::plot_grid(plotlist = plot_list))
 }
 
 
@@ -217,12 +321,14 @@ colnames(data) <- c("gdp", "inf", "irst")
 library(tidyverse)
 library(ggplot2)
 
-y <- bvar(data, lags = 5)
+y <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
+u <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
+w <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
 x <- irf(y, conf_bands = c(0.05, 0.16))
 z <- irf(y, conf_bands = 0.5)
 
 
-irf_plot_gg(x, area = TRUE, vars_response = c(1,2), vars_impulse = c("irst"))
+pp <- irf_plot_gg(x, area = TRUE, vars_response = c(1,2), vars_impulse = c("irst"))
 
 irf_plot_gg(y, area = TRUE, vars_response = c(2,3), vars_impulse = c("gdp", "irst"), scales = "free")
 
@@ -237,3 +343,6 @@ fcast_plot_gg(y, area = TRUE, vars = c("irst"))
 fcast_plot_gg(xx, area = TRUE, vars = c("gdp", "irst"))
 
 fcast_plot_gg(zz, area = TRUE, vars = c(1,2))
+
+bvar_plot_gg(y, chains = list(u,w), type = "density")
+
