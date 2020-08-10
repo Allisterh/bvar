@@ -227,6 +227,7 @@ bvar_plot_gg <- function(
   vars = NULL,
   vars_response = NULL,
   vars_impulse = NULL,
+  orientation = "vertical",
   chains = list(),
   ...) {
 
@@ -267,13 +268,13 @@ bvar_plot_gg <- function(
 
   if(type != "density") {
     p_trace <- ggplot(df, aes(y = value, x = x_axis)) +
-      labs(x = NULL, y = NULL) +
+      labs(x = NULL, y = NULL, color = "MCMC chain") +
       theme_bw() +
       theme(strip.background = element_blank()) +
       facet_wrap(.~vars, scales = "free",
-                 ncol = ifelse(orientation == "horizontal",
-                               length(unique(df[["vars"]])),
-                               1)) +
+                 ncol = ifelse(orientation == "vertical",
+                               1,
+                               length(unique(df[["vars"]])))) +
       scale_x_continuous(expand = c(0, 0)) +
       theme(legend.position = "bottom")
 
@@ -283,19 +284,23 @@ bvar_plot_gg <- function(
       p_trace <- p_trace + geom_line(aes(color = chain), alpha = 0.5)
     }
 
+    if(type == "full") {
+      p_trace <- p_trace + theme(legend.position = "none")
+    }
+
     plot_list[["trace"]] <- p_trace
   }
 
   if(type != "trace") {
 
     p_dens <- ggplot(df, aes(x = value)) +
-      labs(x = NULL, y = NULL) +
+      labs(x = NULL, y = NULL, fill = "MCMC chain", color = "MCMC chain") +
       theme_bw() +
       theme(strip.background = element_blank()) +
       facet_wrap(.~vars, scales = "free",
-                 ncol = ifelse(orientation == "horizontal",
-                               length(unique(df[["vars"]])),
-                               1)) +
+                 ncol = ifelse(orientation == "vertical",
+                               1,
+                               length(unique(df[["vars"]])))) +
       theme(legend.position = "bottom")
 
     if(length(prep[["chains"]]) == 0) {
@@ -304,10 +309,21 @@ bvar_plot_gg <- function(
       p_dens <- p_dens + geom_density(aes(color = chain, fill = chain), alpha = 0.5)
     }
 
+    if(type == "full") {
+      p_legend <- get_legend(p_dens)
+      p_dens <- p_dens + theme(legend.position = "none")
+    }
+
     plot_list[["dens"]] <- p_dens
   }
-
-  return(cowplot::plot_grid(plotlist = plot_list))
+  p_test <- get_legend(p_dens)
+  if(type == "full") {
+    return(cowplot::plot_grid(plot_grid(plotlist = plot_list,
+                          ncol = ifelse(orientation == "vertical", 2, 1)),
+                  p_legend, ncol = 1, rel_heights = c(10,1)))
+  } else {
+    return(cowplot::plot_grid(plotlist = plot_list))
+  }
 }
 
 
@@ -344,5 +360,5 @@ fcast_plot_gg(xx, area = TRUE, vars = c("gdp", "irst"))
 
 fcast_plot_gg(zz, area = TRUE, vars = c(1,2))
 
-bvar_plot_gg(y, chains = list(u,w), type = "density")
+bvar_plot_gg(y, chains = list(u,w), type = "full", orientation = "vertical")
 
