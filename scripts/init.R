@@ -13,14 +13,13 @@ gg_df_irf <- function(x) {
     x[["quants"]] <- temp
   }
 
-  # So we know what's what
   dimnames(x[["quants"]])[[2]] <- x[["variables"]]
   dimnames(x[["quants"]])[[4]] <- x[["variables"]]
   dimnames(x[["quants"]])[[3]] <- seq(dim(x[["quants"]])[3])
 
-  out <- as.data.frame.table(x[["quants"]]) # Magic base R
+  out <- as.data.frame.table(x[["quants"]])
   colnames(out) <- c("quant", "response", "time", "impulse", "value")
-  out[["time"]] <- as.integer(out[["time"]]) # Can't be a factor for the x axis
+  out[["time"]] <- as.integer(out[["time"]])
 
   return(out)
 }
@@ -30,7 +29,6 @@ gg_df_fcast <- function(x, t_back) {
 
   stopifnot(inherits(x, "bvar_fcast"))
 
-  # So we know what's what
   has_quants <- length(dim(x[["quants"]])) == 3L
   if(!has_quants) {
     temp <- array(NA, c(1, dim(x[["quants"]])))
@@ -49,9 +47,9 @@ gg_df_fcast <- function(x, t_back) {
   out["50%", 1:t_back, ] <- x[["data"]][(nrow(x[["data"]]) - t_back + 1):nrow(x[["data"]]),]
   out[ , (t_back + 1):length(time_x), ] <- x[["quants"]]
 
-  out <- as.data.frame.table(out) # Magic base R
+  out <- as.data.frame.table(out)
   colnames(out) <- c("quant", "time", "vars", "value")
-  out[["time"]] <- as.numeric(as.character(out[["time"]])) # Can't be a factor for the x axis
+  out[["time"]] <- as.numeric(levels(out[["time"]]))[out[["time"]]]
 
   return(out)
 }
@@ -138,9 +136,10 @@ irf_plot_gg <- function(
       }
     } else {
       col <- fill_ci_col(x = integer(), y = col, P = P)
+      names(col) <- P_n[which(P_n != "50%")]
       for(pp in P_n[which(P_n != "50%")]) {
         p <- p + geom_line(aes(y = .data[[pp]]),
-                           colour = col[which(P_n == pp)])
+                           color = col[pp])
       }
     }
   }
@@ -163,6 +162,7 @@ fcast_plot_gg <- function(
   area = FALSE,
   col = "#737373",
   fill = "#808080"){
+
   if(!inherits(x, "bvar") && !inherits(x, "bvar_fcast")) {
     stop("Please provide a `bvar` or `bvar_fcast` object.")
   }
@@ -208,9 +208,10 @@ fcast_plot_gg <- function(
       }
     } else {
       col <- fill_ci_col(x = integer(), y = col, P = P)
+      names(col) <- P_n[which(P_n != "50%")]
       for(pp in P_n[which(P_n != "50%")]) {
         p <- p + geom_line(aes(y = .data[[pp]]),
-                           colour = col[which(P_n == pp)])
+                           color = col[pp], na.rm = TRUE)
       }
     }
   }
@@ -275,7 +276,6 @@ bvar_plot_gg <- function(
                  ncol = ifelse(orientation == "vertical",
                                1,
                                length(unique(df[["vars"]])))) +
-      scale_x_continuous(expand = c(0, 0)) +
       theme(legend.position = "bottom")
 
     if(length(prep[["chains"]]) == 0) {
@@ -310,15 +310,15 @@ bvar_plot_gg <- function(
     }
 
     if(type == "full") {
-      p_legend <- get_legend(p_dens)
+      p_legend <- cowplot::get_legend(p_dens)
       p_dens <- p_dens + theme(legend.position = "none")
     }
 
     plot_list[["dens"]] <- p_dens
   }
-  p_test <- get_legend(p_dens)
+
   if(type == "full") {
-    return(cowplot::plot_grid(plot_grid(plotlist = plot_list,
+    return(cowplot::plot_grid(cowplot::plot_grid(plotlist = plot_list,
                           ncol = ifelse(orientation == "vertical", 2, 1)),
                   p_legend, ncol = 1, rel_heights = c(10,1)))
   } else {
@@ -344,21 +344,20 @@ x <- irf(y, conf_bands = c(0.05, 0.16))
 z <- irf(y, conf_bands = 0.5)
 
 
-pp <- irf_plot_gg(x, area = TRUE, vars_response = c(1,2), vars_impulse = c("irst"))
+irf_plot_gg(x, area = FALSE, vars_response = c(1,2), vars_impulse = c("irst"))
 
-irf_plot_gg(y, area = TRUE, vars_response = c(2,3), vars_impulse = c("gdp", "irst"), scales = "free")
+irf_plot_gg(y, area = FALSE, vars_response = c(2,3), vars_impulse = c("gdp", "irst"), scales = "free")
 
-irf_plot_gg(z, area = TRUE, vars_response = c(1,2), vars_impulse = c(2,3))
-
+irf_plot_gg(z, area = FALSE, vars_response = c(1,2), vars_impulse = c(2,3))
 
 xx <- predict(y, conf_bands = c(0.05, 0.16))
 zz <- predict(y, conf_bands = 0.5)
 
-fcast_plot_gg(y, area = TRUE, vars = c("irst"))
+fcast_plot_gg(y, area = FALSE, vars = c("irst"))
 
-fcast_plot_gg(xx, area = TRUE, vars = c("gdp", "irst"))
+fcast_plot_gg(xx, area = FALSE, vars = c("gdp", "irst"))
 
-fcast_plot_gg(zz, area = TRUE, vars = c(1,2))
+fcast_plot_gg(zz, area = FALSE, vars = c(1,2))
 
 bvar_plot_gg(y, chains = list(u,w), type = "full", orientation = "vertical")
 
