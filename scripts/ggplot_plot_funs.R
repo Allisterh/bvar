@@ -20,6 +20,10 @@
 #' See \emph{col} for more information.
 #' @param variables Optional character vector. Names of all variables in the
 #' object. Used to subset and title. Taken from \code{x$variables} if available.
+#' @param scales String indicating whether the scales of the plotted impulse
+#' responses are \code{"free"}, i.e. each plot has its own y-axis, or
+#' \code{"fixed"}, i.e. the y-axis is common across plots. Defaults to
+#' \code{"fixed"}.
 #' @param ... Other parameters for calculating impulse responses if \emph{x}
 #' is not a \code{bvar_irf} object.
 #'
@@ -38,7 +42,7 @@ irf_plot_gg <- function(
   area = FALSE,
   fill = "#808080",
   variables = NULL,
-  scales = "fixed",
+  scales = c("fixed", "free"),
   ...) {
 
   if(!inherits(x, "bvar") && !inherits(x, "bvar_irf")) {
@@ -49,6 +53,8 @@ irf_plot_gg <- function(
     if(is.null(x[["irf"]])) {message("No IRFs found. Calculating...")}
     x <- irf(x, ...)
   }
+
+  scales <- match.arg(scales)
 
   df <- gg_df_irf(x)
   M <- length(levels(df[["response"]]))
@@ -390,7 +396,8 @@ bvar_plot_gg <- function(
   if(type == "full") {
     return(cowplot::plot_grid(
       cowplot::plot_grid(plotlist = plot_list,
-                         ncol = ifelse(orientation == "vertical", 2, 1)),
+                         ncol = ifelse(orientation == "vertical", 2, 1),
+                         align = "v", axis = "b"),
       p_legend, ncol = 1, rel_heights = c(10, 1)))
   } else {
     return(plot_list[[1]])
