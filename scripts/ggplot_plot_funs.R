@@ -171,6 +171,9 @@ fcast_plot_gg <- function(
 
   orientation <- match.arg(orientation)
 
+  t_back <- int_check(t_back, min = 0, max = nrow(x[["data"]]),
+                      msg = "t_back too large.")
+
   df <- gg_df_fcast(x, t_back)
   M <- length(levels(df[["vars"]]))
   P_n <- levels(df[["quant"]])
@@ -243,10 +246,10 @@ fcast_plot_gg <- function(
 #' example section for a demonstration.
 #' @param quants Optional numeric vector for displaying quantiles of parameter
 #' draws
-#' @param chains List of \code{bvar} objects. Contents are then added to trace
-#' and density plots to help assessing covergence.
 #' @param orientation String indicating the orientation of the plots. Defaults
 #' to \code{"vertical"}; may be set to \code{"horizontal"}.
+#' @param chains List of \code{bvar} objects. Contents are then added to trace
+#' and density plots to help assessing covergence.
 #' @param ... Other parameters for calculating predictions or impulse responses
 #' if \code{type} is \code{"irf"} or \code{"fcast"}, respectively.
 #'

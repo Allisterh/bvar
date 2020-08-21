@@ -25,8 +25,10 @@ gg_df_irf <- function(x) {
   dimnames(x[["quants"]])[[3]] <- seq(dim(x[["quants"]])[3])
 
   out <- as.data.frame.table(x[["quants"]])
-  colnames(out) <- c("quant", "response", "time", "impulse", "value")
+  out <- out[, c(4, 2, 3, 5, 1)]
+  colnames(out) <- c("impulse", "response", "time", "value", "quant")
   out[["time"]] <- as.integer(out[["time"]])
+  out <- out[order(out[["impulse"]], out[["response"]], out[["time"]]), ]
 
   return(out)
 }
@@ -61,12 +63,16 @@ gg_df_fcast <- function(x, t_back) {
   rownames(out) <- rownames(x[["quants"]])
   dimnames(out)[[2]] <- time_x
   dimnames(out)[[3]] <- x[["variables"]]
-  out["50%", 1:t_back, ] <- x[["data"]][(nrow(x[["data"]]) - t_back + 1):nrow(x[["data"]]),]
+  if(t_back > 0) {
+    out["50%", 1:t_back, ] <- tail(x[["data"]], t_back)
+  }
   out[ , (t_back + 1):length(time_x), ] <- x[["quants"]]
 
   out <- as.data.frame.table(out)
-  colnames(out) <- c("quant", "time", "vars", "value")
+  out <- out[, c(3, 2, 4, 1)]
+  colnames(out) <- c("vars", "time", "value", "quant")
   out[["time"]] <- as.numeric(levels(out[["time"]]))[out[["time"]]]
+  out <- out[order(out[["vars"]], out[["time"]]), ]
 
   return(out)
 }

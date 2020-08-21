@@ -3,7 +3,7 @@ sapply(paste0("./R/", files_source), source, echo = FALSE)
 
 source("./scripts/ggplot_prep_funs.R")
 source("./scripts/ggplot_plot_funs.R")
-
+source("./scripts/tidy_data.R")
 #####
 # Testing
 
@@ -23,6 +23,10 @@ z <- irf(y, conf_bands = 0.5)
 
 xx <- predict(y, conf_bands = c(0.05, 0.16))
 zz <- predict(y, conf_bands = 0.5)
+
+
+#####
+# Plots
 
 p1 <- irf_plot_gg(x, area = TRUE, fill = "#99CCFF", vars_response = c(1,2), vars_impulse = c("irst"))
 
@@ -48,11 +52,16 @@ p7 <- bvar_plot_gg(y, chains = list(u,w), type = "density", quants = 0.05)
 p7 + theme_classic() + theme(legend.position = "bottom")
 
 
-
 p8 <- bvar_plot_gg(y, chains = list(u,w), type = "full", orientation = "vertical", quants = 0.16,
                    vars_impulse = c(1,2), vars_response = c(2,3))
 
-p8
+
 
 #####
-# Broom
+# Tidy data
+
+tidy.bvar_irf(x)
+
+tidy.bvar_fcast(xx)
+
+tidy.bvar(y, chains = list(u, w), quants = 0.16)
