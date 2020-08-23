@@ -9,9 +9,10 @@
 #' or a \code{bvar} object, obtained from \code{\link{bvar}}. In the latter
 #' case impulse reponses will be calculated ex-post using arguments from the
 #' ellipsis.
-#' @param vars_impulse,vars_response Optional numeric or character vector. Used
-#' to subset the plot's impulses / responses to certain variables by position
-#' or name (must be available). Defaults to \code{NULL}, i.e. all variables.
+#' @param vars_impulse,vars_response Optional character or integer vectors used
+#' to select coefficents. Dependent variables are specified with
+#' \emph{vars_response}, explanatory ones with \emph{vars_impulse}. Default to
+#' \code{NULL}, indicating that no coefficients will be displayed.
 #' @param col Character vector. Colour(s) of the lines delineating credible
 #' intervals. Single values will be recycled if necessary. Recycled HEX color
 #' codes are varied in transparency if not provided (e.g. "#737373FF").
@@ -109,6 +110,108 @@ irf_plot_gg <- function(
   p <- p +
     geom_hline(yintercept = 0, colour = "red", lty = 2) +
     geom_line(aes(y = `50%`))
+
+  return(p)
+}
+
+
+#' \code{\link[ggplot2]{ggplot}} plotting function for Bayesian VAR forecast
+#' error variance decompositions
+#'
+#' Plotting function for forecast error variance decompositions obtained from
+#' \code{\link{fevd.bvar}} using \code{\link[ggplot2]{ggplot}}.
+#' Forecast error variance decompositions of all or a subset of the available
+#' variables can be plotted.
+#'
+#' @param x A \code{bvar_fevd} object, obtained from \code{\link{fevd.bvar}}
+#' or either a \code{bvar} object, obtained from \code{\link{bvar}} or a
+#' \code{bvar_irf} object, obtained from \code{\link{irf.bvar}}. In the latter
+#' case impulse reponses will be calculated ex-post using arguments from the
+#' ellipsis.
+#' @param vars_impulse,vars_response Optional numeric or character vector. Used
+#' to subset the plot's impulses / responses to certain variables by position
+#' or name (must be available). Defaults to \code{NULL}, i.e. all variables.
+#' @param fill Character vector. Colour(s) to fill the bars.
+#' @param variables Optional character vector. Names of all variables in the
+#' object. Used to subset and title. Taken from \code{x$variables} if available.
+#' @param ... Other parameters for calculating forecast error variance
+#' decompositions if \emph{x} is not a \code{bvar_fevd} object.
+#'
+#' @return Returns an object of class \code{\link[ggplot2]{ggplot}}.
+#'
+#' @seealso \code{\link{bvar}}; \code{\link{fevd.bvar}}; \code{\link{irf.bvar}}
+#'
+#' @keywords BVAR irf fevd analysis ggplot
+#'
+#' @export
+fevd_plot_gg <- function(
+  x,
+  vars_response = NULL,
+  vars_impulse = NULL,
+  fill = "#808080",
+  variables = NULL,
+  ...) {
+
+  if(!inherits(x, "bvar") && !inherits(x, "bvar_fevd")) {
+    stop("Please provide a `bvar`, `bvar_irf` or `bvar_fevd` object.")
+  }
+
+  if(inherits(x, "bvar")) {
+    if(is.null(x[["irf"]][["fevd"]])) {
+      message("No FEVDs found. Calculating...")
+      }
+    x <- irf(x, ..., fevd = TRUE)[["fevd"]]
+  }
+
+  df <- gg_df_irf(x)
+  M <- length(levels(df[["response"]]))
+  P_n <- levels(df[["quant"]])
+  P <- length(P_n)
+  df <- tidyr::pivot_wider(df, names_from = quant)
+
+  variables <- name_deps(variables = if(is.null(variables)) {
+    x[["variables"]]} else {variables}, M = M)
+
+  pos_imp <- pos_vars(vars_impulse, variables, M)
+  pos_res <- pos_vars(vars_response, variables, M)
+
+  df <- df[intersect(which(df[["impulse"]] %in% variables[pos_imp]),
+                     which(df[["response"]] %in% variables[pos_res])), ]
+
+  # df[["impulse"]] <- factor(paste("Shock:", df[["impulse"]]))
+  df[["response"]] <- factor(paste("Variation in:", df[["response"]]))
+
+  # names(df)[1] <- "Shock of:"
+
+  p <- ggplot(df, aes(x = time)) +
+    labs(x = NULL, y = NULL, fill = "Contribution of:") +
+    theme_bw() +
+    theme(strip.background = element_blank()) +
+    facet_grid(response~.) +
+    geom_col(aes(y = `50%`, fill = impulse, group = impulse)) +
+    theme(legend.position = "bottom")
+
+  # if(P > 1) {
+  #   if(area) {
+  #     fill <- fill_ci_col(x = integer(), y = fill, P = P)
+  #     for(pp in seq_len(P - 1)) {
+  #       p <- p + geom_ribbon(aes(ymin = .data[[P_n[pp]]],
+  #                                ymax = .data[[P_n[pp + 1]]]),
+  #                            fill = fill[pp])
+  #     }
+  #   } else {
+  #     col <- fill_ci_col(x = integer(), y = col, P = P)
+  #     names(col) <- P_n[which(P_n != "50%")]
+  #     for(pp in P_n[which(P_n != "50%")]) {
+  #       p <- p + geom_line(aes(y = .data[[pp]]),
+  #                          color = col[pp])
+  #     }
+  #   }
+  # }
+  #
+  # p <- p +
+  #   geom_hline(yintercept = 0, colour = "red", lty = 2) +
+  #   geom_line(aes(y = `50%`))
 
   return(p)
 }
@@ -240,12 +343,12 @@ fcast_plot_gg <- function(
 #' explanatory variables (by providing the name and the desired lag). See the
 #' example section for a demonstration. Defaults to \code{NULL}, i.e. all
 #' hyperparameters.
-#' @param vars_response,vars_impulse Optional character or integer vectors used
+#' @param vars_impulse,vars_response Optional character or integer vectors used
 #' to select coefficents. Dependent variables are specified with
-#' \emph{vars_response}, explanatory ones with \emph{vars_impulse}. See the
-#' example section for a demonstration.
+#' \emph{vars_response}, explanatory ones with \emph{vars_impulse}. Default to
+#' \code{NULL}, indicating that no coefficients will be displayed.
 #' @param quants Optional numeric vector for displaying quantiles of parameter
-#' draws
+#' draws.
 #' @param orientation String indicating the orientation of the plots. Defaults
 #' to \code{"vertical"}; may be set to \code{"horizontal"}.
 #' @param chains List of \code{bvar} objects. Contents are then added to trace
@@ -285,13 +388,13 @@ bvar_plot_gg <- function(
   # Forward and return if "irf" or "fcast"
   if(type == "irf") {
     if(is.null(x[["irf"]])) {message("No `bvar_irf` found. Calculating...")}
-    return(irf_plot_gg(
+    return(gg_plot.bvar_irf(
       irf(x), vars_response = vars_response, vars_impulse = vars_impulse,
       variables = x[["variables"]], ...))
   }
   if(type == "fcast") {
     if(is.null(x[["fcast"]])) {message("No `bvar_fcast` found. Calculating...")}
-    return(fcast_plot_gg(
+    return(gg_plot.bvar_fcast(
       predict(x), vars = vars, variables = x[["variables"]], ...))
   }
 
