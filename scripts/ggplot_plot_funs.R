@@ -125,9 +125,9 @@ irf_plot_gg <- function(
 #'
 #' @param x A \code{bvar_fevd} object, obtained from \code{\link{fevd.bvar}}
 #' or either a \code{bvar} object, obtained from \code{\link{bvar}} or a
-#' \code{bvar_irf} object, obtained from \code{\link{irf.bvar}}. In the latter
-#' case impulse reponses will be calculated ex-post using arguments from the
-#' ellipsis.
+#' \code{bvar_irf} object, obtained from \code{\link{irf.bvar}}. For the latter
+#' cases forecast error variance decompositions will be calculated ex-post using
+#' arguments from the ellipsis.
 #' @param vars_impulse,vars_response Optional numeric or character vector. Used
 #' to subset the plot's impulses / responses to certain variables by position
 #' or name (must be available). Defaults to \code{NULL}, i.e. all variables.
@@ -152,7 +152,7 @@ fevd_plot_gg <- function(
   variables = NULL,
   ...) {
 
-  if(!inherits(x, "bvar") && !inherits(x, "bvar_fevd")) {
+  if(!inherits(x, "bvar") && !inherits(x, "bvar_irf") && !inherits(x, "bvar_fevd")) {
     stop("Please provide a `bvar`, `bvar_irf` or `bvar_fevd` object.")
   }
 
@@ -161,6 +161,13 @@ fevd_plot_gg <- function(
       message("No FEVDs found. Calculating...")
       }
     x <- irf(x, ..., fevd = TRUE)[["fevd"]]
+  }
+
+  if(inherits(x, "bvar_irf")) {
+    if(is.null(x[["fevd"]])) {
+      message("No FEVDs found. Calculating...")
+    }
+    x <- fevd(x, ...)
   }
 
   df <- gg_df_irf(x)
@@ -178,12 +185,13 @@ fevd_plot_gg <- function(
   df <- df[intersect(which(df[["impulse"]] %in% variables[pos_imp]),
                      which(df[["response"]] %in% variables[pos_res])), ]
 
-  # df[["impulse"]] <- factor(paste("Shock:", df[["impulse"]]))
   df[["response"]] <- factor(paste("Variation in:", df[["response"]]))
 
-  # names(df)[1] <- "Shock of:"
-
-  p <- ggplot(df, aes(x = time)) +
+  p <- ggplot(df, aes(x = time - 1)) +
+    scale_x_continuous(breaks = function(x) {
+      unique(floor(pretty(seq(0, (max(x)) * 1.1))))
+    }) +
+    scale_y_continuous(labels = function(x) paste0(x * 100, "%")) +
     labs(x = NULL, y = NULL, fill = "Contribution of:") +
     theme_bw() +
     theme(strip.background = element_blank()) +
