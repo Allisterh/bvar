@@ -248,6 +248,15 @@ fevd.bvar_fevd <- function(x, conf_bands, ...) {
   if(!missing(conf_bands)) {
     quantiles <- quantile_check(conf_bands)
     x[["quants"]] <- apply(x[["fevd"]], c(2, 3, 4), quantile, quantiles)
+
+    has_quants <- length(dim(x[["quants"]])) == 4L
+    if(!has_quants) {
+      temp <- array(NA, c(1, dim(x[["quants"]])))
+      temp[1, , , ] <- x[["quants"]]
+      dimnames(temp)[[1]] <- list("50%")
+      x[["quants"]] <- temp
+    }
+
     x[["quants"]] <- apply(x[["quants"]], c(1, 2, 3),
                            function(x) x / sum(x))
     x[["quants"]] <- aperm(x[["quants"]], c(2, 3, 4, 1))

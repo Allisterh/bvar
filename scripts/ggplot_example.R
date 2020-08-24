@@ -18,7 +18,7 @@ y <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
 u <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
 w <- bvar(data, lags = 5, priors = bv_priors(soc = bv_soc()))
 
-x <- irf(y, conf_bands = c(0.05, 0.16))
+x <- irf(y, conf_bands = c(0.05, 0.16), fevd = TRUE)
 z <- irf(y, conf_bands = 0.5)
 
 xx <- predict(y, conf_bands = c(0.05, 0.16))
@@ -55,6 +55,7 @@ p7 + theme_classic() + theme(legend.position = "bottom")
 p8 <- bvar_plot_gg(y, chains = list(u,w), type = "full", orientation = "vertical", quants = 0.16,
                    vars_impulse = c(1,2), vars_response = c(2,3))
 
+p9 <- fevd_plot_gg(fevd(y), vars_response = c(2, 3), vars_impulse = 1, errorbar = TRUE)
 
 
 #####
@@ -65,3 +66,5 @@ tidy.bvar_irf(x)
 tidy.bvar_fcast(xx)
 
 tidy.bvar(y, chains = list(u, w), quants = 0.16)
+
+tidy.bvar_fevd(fevd(y))

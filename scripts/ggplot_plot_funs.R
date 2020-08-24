@@ -150,6 +150,7 @@ fevd_plot_gg <- function(
   vars_impulse = NULL,
   fill = "#808080",
   variables = NULL,
+  errorbars = FALSE,
   ...) {
 
   if(!inherits(x, "bvar") && !inherits(x, "bvar_irf") && !inherits(x, "bvar_fevd")) {
@@ -157,10 +158,12 @@ fevd_plot_gg <- function(
   }
 
   if(inherits(x, "bvar")) {
-    if(is.null(x[["irf"]][["fevd"]])) {
-      message("No FEVDs found. Calculating...")
-      }
-    x <- irf(x, ..., fevd = TRUE)[["fevd"]]
+    if(is.null(x[["irf"]])) {
+      message("No IRFs or FEVDs found. Calculating...")
+      x <- irf(x, ..., fevd = TRUE)[["fevd"]]
+    } else if (is.null(x[["irf"]][["fevd"]])) {
+      x <- fevd(x[["irf"]], ...)
+    }
   }
 
   if(inherits(x, "bvar_irf")) {
@@ -195,31 +198,18 @@ fevd_plot_gg <- function(
     labs(x = NULL, y = NULL, fill = "Contribution of:") +
     theme_bw() +
     theme(strip.background = element_blank()) +
-    facet_grid(response~.) +
+    facet_grid(response~., scales = "free") +
     geom_col(aes(y = `50%`, fill = impulse, group = impulse)) +
     theme(legend.position = "bottom")
 
-  # if(P > 1) {
-  #   if(area) {
-  #     fill <- fill_ci_col(x = integer(), y = fill, P = P)
-  #     for(pp in seq_len(P - 1)) {
-  #       p <- p + geom_ribbon(aes(ymin = .data[[P_n[pp]]],
-  #                                ymax = .data[[P_n[pp + 1]]]),
-  #                            fill = fill[pp])
-  #     }
-  #   } else {
-  #     col <- fill_ci_col(x = integer(), y = col, P = P)
-  #     names(col) <- P_n[which(P_n != "50%")]
-  #     for(pp in P_n[which(P_n != "50%")]) {
-  #       p <- p + geom_line(aes(y = .data[[pp]]),
-  #                          color = col[pp])
-  #     }
-  #   }
-  # }
-  #
-  # p <- p +
-  #   geom_hline(yintercept = 0, colour = "red", lty = 2) +
-  #   geom_line(aes(y = `50%`))
+  if(P > 1 && errorbar && length(pos_imp) == 1) {
+    if(P > 3) {
+      message("Only largest credible interval will be taken.")
+    }
+    p <- p +
+      geom_errorbar(aes(ymin = .data[[P_n[[1]]]],
+                        ymax = .data[[P_n[[length(P_n)]]]]))
+  }
 
   return(p)
 }
