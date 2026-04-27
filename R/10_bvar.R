@@ -312,40 +312,63 @@ bvar <- function(
     )
   }
 
-  H <- diag(length(opt[["par"]])) * mh[["scale_hess"]]
-
-  J <- unlist(lapply(names(hyper), function(name) {
-    exp(opt[["par"]][[name]]) /
-      (1 + exp(opt[["par"]][[name]]))^2 *
-      (priors[[name]][["max"]] - priors[[name]][["min"]])
-  }))
-  if (any(is.nan(J))) {
-    stop(
-      "Issue with parameter(s) ",
-      paste0(names(hyper)[which(is.nan(J))], collapse = ", "),
-      ". ",
-      "Their mode(s) may be too large to exponentiate."
+  HH <- NULL
+  if (
+    mh[["proposal_scale"]] == "hessian" &&
+      identical(opt[["convergence"]], 0L) &&
+      !is.null(opt[["hessian"]]) &&
+      all(is.finite(opt[["hessian"]]))
+  ) {
+    HH <- tryCatch(
+      {
+        H_inv <- chol2inv(chol(-opt$hessian))
+        if (length(mh[["scale_hess"]]) == 1) {
+          H_inv <- H_inv * mh[["scale_hess"]]
+        } else {
+          S <- diag(mh[["scale_hess"]], nrow = nrow(H_inv))
+          H_inv <- S %*% H_inv %*% S
+        }
+        if (verbose) {
+          cat("Using inverse Hessian to scale proposals.\n")
+        }
+        H_inv
+      },
+      error = function(e) {
+        if (verbose) {
+          cat("Falling back to diagonal proposal scaling.\n")
+        }
+        NULL
+      }
     )
   }
-  if (hyper_n != 1) {
-    J <- diag(J)
-  }
-  HH <- J %*% H %*% t(J)
-
-  # Alternative
-  if (mh[["scale_hess"]][1] == 420) {
-    cat("Using inverse Hessian to scale proposals.\n")
-    H <- chol2inv(chol(-opt$hessian))
-    HH <- H
+  if (is.null(HH)) {
+    H <- diag(length(opt[["par"]])) * mh[["scale_hess"]]
+    J <- unlist(lapply(names(hyper), function(name) {
+      exp(opt[["par"]][[name]]) /
+        (1 + exp(opt[["par"]][[name]]))^2 *
+        (priors[[name]][["max"]] - priors[[name]][["min"]])
+    }))
+    if (any(is.nan(J))) {
+      stop(
+        "Issue with parameter(s) ",
+        paste0(names(hyper)[which(is.nan(J))], collapse = ", "),
+        ". ",
+        "Their mode(s) may be too large to exponentiate."
+      )
+    }
+    if (hyper_n != 1) {
+      J <- diag(J)
+    }
+    HH <- J %*% H %*% t(J)
   }
 
   # Make sure HH is positive definite
   if (hyper_n != 1) {
-    HH_eig <- eigen(HH)
-    HH_eig[["values"]] <- abs(HH_eig[["values"]])
+    HH_eig <- eigen(HH, symmetric = TRUE)
+    HH_eig[["values"]] <- pmax(HH_eig[["values"]], 1e-12)
     HH <- HH_eig
   } else {
-    HH <- list("values" = abs(HH))
+    HH <- list("values" = pmax(HH, 1e-12))
   }
 
   # Initial draw ---

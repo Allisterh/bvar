@@ -50,8 +50,13 @@ bv_metropolis <- function(
   adjust_burn = 0.75,
   acc_lower = 0.25,
   acc_upper = 0.45,
-  acc_change = 0.01
+  acc_change = 0.01,
+  proposal_scale = c("diag", "hessian")
 ) {
+  proposal_scale <- match.arg(proposal_scale)
+  if (proposal_scale == "hessian" && scale_hess == 0.01) {
+    scale_hess <- 1 # We get the default scale from the Hessian
+  }
   scale_hess <- vapply(
     scale_hess,
     num_check,
@@ -76,7 +81,8 @@ bv_metropolis <- function(
       "acc_lower" = acc_lower,
       "acc_upper" = acc_upper,
       "acc_tighten" = 1 - acc_change,
-      "acc_loosen" = 1 + acc_change
+      "acc_loosen" = 1 + acc_change,
+      "proposal_scale" = proposal_scale
     ),
     class = "bv_metropolis"
   )
