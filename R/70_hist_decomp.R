@@ -1,4 +1,3 @@
-
 #' Historical decomposition
 #'
 #' Function to compute a historical variance decomposition of a VAR.
@@ -28,7 +27,6 @@
 #' hist_decomp(x, type = "mean")
 #' }
 hist_decomp.bvar <- function(x, type = c("mean", "quantile"), ...) {
-
   type <- match.arg(type)
 
   # Necessary quantities
@@ -45,7 +43,9 @@ hist_decomp.bvar <- function(x, type = c("mean", "quantile"), ...) {
 
 #' @rdname hist_decomp.bvar
 #' @export
-hist_decomp <- function(x, ...) {UseMethod("hist_decomp", x)}
+hist_decomp <- function(x, ...) {
+  UseMethod("hist_decomp", x)
+}
 
 
 #' @rdname hist_decomp.bvar
@@ -70,19 +70,27 @@ hist_decomp.default <- function(x, ...) {
 #' @return Returns a numeric array of HDs.
 #'
 #' @noRd
-compute_hd <- function(x, shock, comp, eps,
-  lags = x[["meta"]][["lags"]], N = x[["meta"]][["N"]],
-  M = x[["meta"]][["M"]], K = x[["meta"]][["K"]]) {
-
+compute_hd <- function(
+  x,
+  shock,
+  comp,
+  eps,
+  lags = x[["meta"]][["lags"]],
+  N = x[["meta"]][["N"]],
+  M = x[["meta"]][["M"]],
+  K = x[["meta"]][["K"]]
+) {
   kind_of_I <- cbind(diag(M), matrix(0, M, (lags - 1) * M))
   hd_decomp <- array(0, dim = c(M, N + 1, M))
   tmp <- array(0, dim = c(K - 1, N + 1, M))
 
-  for(j in seq_len(dim(hd_decomp)[3])) { # Over variables
+  for (j in seq_len(dim(hd_decomp)[3])) {
+    # Over variables
     eps_tmp <- matrix(0, M, N + 1)
     eps_tmp[j, seq(2, N + 1)] <- eps[j, ]
 
-    for(i in seq.int(2, dim(hd_decomp)[2])) { # Over observations
+    for (i in seq.int(2, dim(hd_decomp)[2])) {
+      # Over observations
       tmp[, i, j] <- shock %*% eps_tmp[, i] + comp %*% tmp[, i - 1, j]
       hd_decomp[, i, j] <- kind_of_I %*% tmp[, i, j]
     }

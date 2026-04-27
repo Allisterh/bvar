@@ -1,4 +1,3 @@
-
 #' Dummy prior settings
 #'
 #' Allows the creation of dummy observation priors for \code{\link{bv_priors}}.
@@ -65,17 +64,29 @@
 #' # Add the new custom dummy priors
 #' bv_priors(hyper = "auto", soc = soc, sur = sur)
 bv_dummy <- function(
-  mode = 1, sd = 1,
-  min = 0.0001, max = 5,
-  fun) {
-
-  sd <- num_check(sd, min = 0 + 1e-16, max = Inf,
-    msg = "Parameter sd misspecified.")
+  mode = 1,
+  sd = 1,
+  min = 0.0001,
+  max = 5,
+  fun
+) {
+  sd <- num_check(
+    sd,
+    min = 0 + 1e-16,
+    max = Inf,
+    msg = "Parameter sd misspecified."
+  )
   fun <- match.fun(fun)
 
   return(
-    dummy(mode = mode, min = min, max = max, sd = sd, fun = fun,
-      coef = gamma_coef(mode, sd))
+    dummy(
+      mode = mode,
+      min = min,
+      max = max,
+      sd = sd,
+      fun = fun,
+      coef = gamma_coef(mode, sd)
+    )
   )
 }
 
@@ -84,18 +95,38 @@ bv_dummy <- function(
 #' @noRd
 dummy <- function(
   mode = 1,
-  min = 0.0001, max = 5,
-  ...) {
+  min = 0.0001,
+  max = 5,
+  ...
+) {
+  mode <- num_check(
+    mode,
+    min = 0,
+    max = Inf,
+    msg = "Invalid value for mode (outside of [0, Inf])."
+  )
+  min <- num_check(
+    min,
+    min = 0,
+    max = max - 1e-16,
+    msg = "Invalid value for min (outside of [0, max))."
+  )
+  max <- num_check(
+    max,
+    min = min + 1e-16,
+    max = Inf,
+    msg = "Invalid value for max (outside of (min, Inf])."
+  )
 
-  mode <- num_check(mode, min = 0, max = Inf,
-    msg = "Invalid value for mode (outside of [0, Inf]).")
-  min <- num_check(min, min = 0, max = max - 1e-16,
-    msg = "Invalid value for min (outside of [0, max)).")
-  max <- num_check(max, min = min + 1e-16, max = Inf,
-    msg = "Invalid value for max (outside of (min, Inf]).")
-
-  out <- structure(list(
-    "mode" = mode, "min" = min, "max" = max, ...), class = "bv_dummy")
+  out <- structure(
+    list(
+      "mode" = mode,
+      "min" = min,
+      "max" = max,
+      ...
+    ),
+    class = "bv_dummy"
+  )
 
   return(out)
 }

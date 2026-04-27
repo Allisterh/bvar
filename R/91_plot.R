@@ -1,4 +1,3 @@
-
 #' Plotting method for Bayesian VARs
 #'
 #' Method to plot trace and densities of coefficient, hyperparameter and
@@ -57,48 +56,81 @@ plot.bvar <- function(
   x,
   type = c("full", "trace", "density", "irf", "fcast"),
   vars = NULL,
-  vars_response = NULL, vars_impulse = NULL,
+  vars_response = NULL,
+  vars_impulse = NULL,
   chains = list(),
   mar = c(2, 2, 2, 0.5),
-  ...) {
-
-  if(!inherits(x, "bvar")) {
-    if(inherits(x[[1]], "bvar")) { # Allow chains to x
+  ...
+) {
+  if (!inherits(x, "bvar")) {
+    if (inherits(x[[1]], "bvar")) {
+      # Allow chains to x
       chains <- x
       x <- x[[1]]
       chains[[1]] <- NULL
-    } else {stop("Please provide a `bvar` object.")}
+    } else {
+      stop("Please provide a `bvar` object.")
+    }
   }
 
   type <- match.arg(type)
 
   # Forward and return if "irf" or "fcast"
-  if(type == "irf") {
-    if(is.null(x[["irf"]])) {message("No `bvar_irf` found. Calculating...")}
+  if (type == "irf") {
+    if (is.null(x[["irf"]])) {
+      message("No `bvar_irf` found. Calculating...")
+    }
     return(plot.bvar_irf(
-      irf(x), vars_response = vars_response, vars_impulse = vars_impulse,
-      variables = x[["variables"]], mar = mar, ...))
+      irf(x),
+      vars_response = vars_response,
+      vars_impulse = vars_impulse,
+      variables = x[["variables"]],
+      mar = mar,
+      ...
+    ))
   }
-  if(type == "fcast") {
-    if(is.null(x[["fcast"]])) {message("No `bvar_fcast` found. Calculating...")}
+  if (type == "fcast") {
+    if (is.null(x[["fcast"]])) {
+      message("No `bvar_fcast` found. Calculating...")
+    }
     return(plot.bvar_fcast(
-      predict(x), vars = vars, variables = x[["variables"]], mar = mar, ...))
+      predict(x),
+      vars = vars,
+      variables = x[["variables"]],
+      mar = mar,
+      ...
+    ))
   }
 
-  if(inherits(chains, "bvar")) {chains <- list(chains)}
-  lapply(chains, function(x) {if(!inherits(x, "bvar")) {
-    stop("Please provide `bvar` objects to the chains parameter.")
-  }})
-
+  if (inherits(chains, "bvar")) {
+    chains <- list(chains)
+  }
+  lapply(chains, function(x) {
+    if (!inherits(x, "bvar")) {
+      stop("Please provide `bvar` objects to the chains parameter.")
+    }
+  })
 
   # Get data and plot -------------------------------------------------------
 
-  prep <- prep_data(x,
-    vars = vars, vars_response = vars_response, vars_impulse = vars_impulse,
-    chains, check_chains = FALSE)
+  prep <- prep_data(
+    x,
+    vars = vars,
+    vars_response = vars_response,
+    vars_impulse = vars_impulse,
+    chains,
+    check_chains = FALSE
+  )
 
-  .plot_bvar(prep[["data"]], type,
-    prep[["vars"]], prep[["chains"]], prep[["bounds"]], mar, ...)
+  .plot_bvar(
+    prep[["data"]],
+    type,
+    prep[["vars"]],
+    prep[["chains"]],
+    prep[["bounds"]],
+    mar,
+    ...
+  )
 
   return(invisible(x))
 }
@@ -119,22 +151,45 @@ plot.bvar_chains <- plot.bvar
   chains = list(),
   bounds = NULL,
   mar = c(2, 2, 2, 0.5),
-  ...) {
-
+  ...
+) {
   # Plot ---
 
-  op <- par(mfrow = c(length(vars), if(type == "full") {2} else {1}),
-    mar = mar, ...)
+  op <- par(
+    mfrow = c(
+      length(vars),
+      if (type == "full") {
+        2
+      } else {
+        1
+      }
+    ),
+    mar = mar,
+    ...
+  )
 
-  for(i in seq_len(ncol(x))) {
-
-    if(type != "density") { # i.e. full or trace
-      .plot_trace(x[, i], name = vars[i], bounds = bounds[, i],
-        dots = lapply(chains, function(x) {x[, i]}))
+  for (i in seq_len(ncol(x))) {
+    if (type != "density") {
+      # i.e. full or trace
+      .plot_trace(
+        x[, i],
+        name = vars[i],
+        bounds = bounds[, i],
+        dots = lapply(chains, function(x) {
+          x[, i]
+        })
+      )
     }
-    if(type != "trace") { # i.e. full or density
-      .plot_dens(x[, i], name = vars[i], bounds = bounds[, i],
-        dots = lapply(chains, function(x) {x[, i]}))
+    if (type != "trace") {
+      # i.e. full or density
+      .plot_dens(
+        x[, i],
+        name = vars[i],
+        bounds = bounds[, i],
+        dots = lapply(chains, function(x) {
+          x[, i]
+        })
+      )
     }
   }
 
@@ -157,13 +212,27 @@ plot.bvar_chains <- plot.bvar
 #'
 #' @noRd
 .plot_trace <- function(x, name = NULL, bounds = NULL, dots = list()) {
+  ylim <- c(
+    min(vapply(dots, min, double(1)), x),
+    max(vapply(dots, max, double(1)), x)
+  )
 
-  ylim <- c(min(vapply(dots, min, double(1)), x),
-    max(vapply(dots, max, double(1)), x))
-
-  plot(x, type = "l", xlab = "Index", ylab = "Value", ylim = ylim,
-    main = paste0("Trace", if(!is.null(name)) {paste(" of", name)}))
-  for(dot in dots) {lines(dot, col = "lightgray")}
+  plot(
+    x,
+    type = "l",
+    xlab = "Index",
+    ylab = "Value",
+    ylim = ylim,
+    main = paste0(
+      "Trace",
+      if (!is.null(name)) {
+        paste(" of", name)
+      }
+    )
+  )
+  for (dot in dots) {
+    lines(dot, col = "lightgray")
+  }
   lines(x)
   abline(h = bounds, lty = "dashed", col = "darkgray")
 
@@ -174,16 +243,31 @@ plot.bvar_chains <- plot.bvar
 #' @rdname .plot_trace
 #' @noRd
 .plot_dens <- function(x, name = NULL, bounds = NULL, dots = list()) {
+  xlim <- c(
+    min(vapply(dots, min, double(1)), x),
+    max(vapply(dots, max, double(1)), x)
+  )
+  ylim <- c(
+    0,
+    max(
+      vapply(lapply(dots, function(x) density(x)[["y"]]), max, double(1)),
+      density(x)[["y"]]
+    )
+  )
 
-  xlim <- c(min(vapply(dots, min, double(1)), x),
-    max(vapply(dots, max, double(1)), x))
-  ylim <- c(0, max(vapply(lapply(dots, function(x) density(x)[["y"]]),
-    max, double(1)), density(x)[["y"]]))
-
-  plot(density(x), xlim = xlim, ylim = ylim,
-    main = paste0("Density", if(!is.null(name)) {paste(" of", name)}))
+  plot(
+    density(x),
+    xlim = xlim,
+    ylim = ylim,
+    main = paste0(
+      "Density",
+      if (!is.null(name)) {
+        paste(" of", name)
+      }
+    )
+  )
   polygon(density(x), col = "#CCCCCC33", border = NA)
-  for(dot in dots) {
+  for (dot in dots) {
     dens <- density(dot)
     polygon(dens, col = "#CCCCCC33", border = NA)
     lines(dens)

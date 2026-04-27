@@ -1,4 +1,3 @@
-
 #' Methods for \pkg{coda} Markov chain Monte Carlo objects
 #'
 #' Methods to convert parameter and/or coefficient draws from \code{\link{bvar}}
@@ -62,38 +61,54 @@ NULL
 
 
 #' @rdname coda
-as.mcmc.bvar <- function( # Dynamic export (zzz.R)
+as.mcmc.bvar <- function(
+  # Dynamic export (zzz.R)
   x,
   vars = NULL,
-  vars_response = NULL, vars_impulse = NULL,
-  chains = list(), ...) {
-
+  vars_response = NULL,
+  vars_impulse = NULL,
+  chains = list(),
+  ...
+) {
   # Checks ---
 
-  if(!inherits(x, "bvar")) {
-    if(inherits(x[[1]], "bvar")) { # Allow chains to x
+  if (!inherits(x, "bvar")) {
+    if (inherits(x[[1]], "bvar")) {
+      # Allow chains to x
       chains <- x
       x <- x[[1]]
       chains[[1]] <- NULL
-    } else {stop("Please provide a `bvar` object.")}
+    } else {
+      stop("Please provide a `bvar` object.")
+    }
   }
 
-  if(inherits(chains, "bvar")) {chains <- list(chains)}
-  lapply(chains, function(z) {if(!inherits(z, "bvar")) {
-    stop("Please provide `bvar` objects to the chains.")
-  }})
+  if (inherits(chains, "bvar")) {
+    chains <- list(chains)
+  }
+  lapply(chains, function(z) {
+    if (!inherits(z, "bvar")) {
+      stop("Please provide `bvar` objects to the chains.")
+    }
+  })
 
   has_coda()
 
-
   # Get data and transform ---
 
-  prep <- prep_data(x,
-    vars = vars, vars_response = vars_response, vars_impulse = vars_impulse,
-    chains = chains, check_chains = TRUE, Ms = TRUE, n_saves = TRUE)
+  prep <- prep_data(
+    x,
+    vars = vars,
+    vars_response = vars_response,
+    vars_impulse = vars_impulse,
+    chains = chains,
+    check_chains = TRUE,
+    Ms = TRUE,
+    n_saves = TRUE
+  )
   chains <- prep[["chains"]]
 
-  if(!is.null(chains) && length(chains) > 0) {
+  if (!is.null(chains) && length(chains) > 0) {
     chains[["x"]] <- prep[["data"]]
     out <- coda::mcmc.list(... = lapply(chains, coda::as.mcmc, ...))
   } else {
@@ -109,4 +124,6 @@ as.mcmc.bvar_chains <- as.mcmc.bvar # Dynamic export (zzz.R)
 
 
 #' @noRd
-has_coda <- function() {has_package("coda")}
+has_coda <- function() {
+  has_package("coda")
+}

@@ -1,4 +1,3 @@
-
 #' FRED-MD and FRED-QD: Databases for Macroeconomic Research
 #'
 #' FRED-MD and FRED-QD are large macroeconomic databases, containing monthly

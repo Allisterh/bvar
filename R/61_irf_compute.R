@@ -35,27 +35,38 @@
 #' @noRd
 compute_irf <- function(
   beta_comp,
-  sigma, sigma_chol,
-  M, lags,
+  sigma,
+  sigma_chol,
+  M,
+  lags,
   horizon,
   identification,
-  sign_restr, zero = FALSE, sign_lim = 10000) {
-
+  sign_restr,
+  zero = FALSE,
+  sign_lim = 10000
+) {
   # Identification
-  if(identification) {
+  if (identification) {
     sigma_chol <- t(chol(sigma))
-    if(is.null(sign_restr)) {
+    if (is.null(sign_restr)) {
       shock <- sigma_chol
     } else {
-      shock <- sign_restr(sigma_chol = sigma_chol,
-        sign_restr = sign_restr, M = M, sign_lim = sign_lim, zero = zero)
+      shock <- sign_restr(
+        sigma_chol = sigma_chol,
+        sign_restr = sign_restr,
+        M = M,
+        sign_lim = sign_lim,
+        zero = zero
+      )
     }
-  } else {shock <- sigma}
+  } else {
+    shock <- sigma
+  }
 
   # Impulse responses
   irf_comp <- array(0, c(M * lags, horizon, M * lags))
   irf_comp[1:M, 1, 1:M] <- shock
-  for(i in 2:horizon) {
+  for (i in 2:horizon) {
     irf_comp[, i, ] <- beta_comp %*% irf_comp[, i - 1, ] # Could vectorise
   }
   irf_comp <- irf_comp[1:M, , 1:M]

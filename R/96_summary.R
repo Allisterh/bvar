@@ -1,4 +1,3 @@
-
 #' Summary method for Bayesian VARs
 #'
 #' Retrieves several outputs of interest, including the median coefficient
@@ -37,10 +36,15 @@
 #' summary(x)
 #' }
 summary.bvar <- function(object, ...) {
-
-  out <- structure(list(
-    "bvar" = object, "coef" = coef.bvar(object), "vcov" = vcov.bvar(object),
-    "logLik" = logLik.bvar(object)), class = "bvar_summary")
+  out <- structure(
+    list(
+      "bvar" = object,
+      "coef" = coef.bvar(object),
+      "vcov" = vcov.bvar(object),
+      "logLik" = logLik.bvar(object)
+    ),
+    class = "bvar_summary"
+  )
 
   return(out)
 }
@@ -48,12 +52,14 @@ summary.bvar <- function(object, ...) {
 
 #' @export
 print.bvar_summary <- function(x, ...) {
-
   print(x[["bvar"]])
 
-  cat("\n"); print.bvar_coefs(x[["coef"]])
-  cat("\n"); print.bvar_vcovs(x[["vcov"]])
-  cat("\n"); cat("Log-Likelihood:", x[["logLik"]], "\n")
+  cat("\n")
+  print.bvar_coefs(x[["coef"]])
+  cat("\n")
+  print.bvar_vcovs(x[["vcov"]])
+  cat("\n")
+  cat("Log-Likelihood:", x[["logLik"]], "\n")
 
   return(invisible(x))
 }

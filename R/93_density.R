@@ -1,4 +1,3 @@
-
 #' Density methods for Bayesian VARs
 #'
 #' Calculates densities of hyperparameters or coefficient draws from Bayesian
@@ -52,20 +51,28 @@
 #' density(x, vars = c("lambda", "UNRATE"))
 #' }
 density.bvar <- function(
-  x, vars = NULL,
-  vars_response = NULL, vars_impulse = NULL,
-  ...) {
-
+  x,
+  vars = NULL,
+  vars_response = NULL,
+  vars_impulse = NULL,
+  ...
+) {
   # Get data and apply density ---
 
-  prep <- prep_data(x, vars = vars,
-    vars_response = vars_response, vars_impulse = vars_impulse)
+  prep <- prep_data(
+    x,
+    vars = vars,
+    vars_response = vars_response,
+    vars_impulse = vars_impulse
+  )
   data <- prep[["data"]]
   vars <- prep[["vars"]]
 
-  out <- if(length(vars) == 1) {
+  out <- if (length(vars) == 1) {
     structure(list(density(data, ...)), names = vars)
-  } else {structure(apply(data, 2, density, ...), names = vars)}
+  } else {
+    structure(apply(data, 2, density, ...), names = vars)
+  }
 
   class(out) <- "bvar_density"
 
@@ -75,7 +82,6 @@ density.bvar <- function(
 
 #' @export
 print.bvar_density <- function(x, ...) {
-
   lapply(x, print, ...)
 
   return(invisible(x))
@@ -90,11 +96,11 @@ plot.bvar_density <- function(
   x,
   mar = c(2, 2, 2, 0.5),
   mfrow = c(length(x), 1),
-  ...) {
-
+  ...
+) {
   op <- par(mfrow = mfrow, mar = mar, ...)
 
-  for(i in seq_along(x)) {
+  for (i in seq_along(x)) {
     plot(x[[i]], main = paste("Density of", names(x)[i]))
   }
 
@@ -107,7 +113,6 @@ plot.bvar_density <- function(
 #' @rdname density.bvar
 #' @export
 independent_index <- function(var, n_vars, lag) {
-
   x <- vapply(c(var, n_vars, lag), int_check, integer(1L))
 
   return(1 + x[2] * (x[3] - 1) + x[1])

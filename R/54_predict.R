@@ -1,4 +1,3 @@
-
 #' Predict method for Bayesian VARs
 #'
 #' Retrieves / calculates forecasts for Bayesian VARs generated via
@@ -69,28 +68,34 @@
 #' summary(x, vars = 2L)
 #' }
 predict.bvar <- function(
-  object, ...,
-  conf_bands, n_thin = 1L,
-  newdata) {
-
+  object,
+  ...,
+  conf_bands,
+  n_thin = 1L,
+  newdata
+) {
   dots <- list(...)
   fcast_store <- object[["fcast"]]
 
-
   # Calculate new forecast -----
 
-  if(is.null(fcast_store) || length(dots) != 0L || !missing(newdata)) {
-
+  if (is.null(fcast_store) || length(dots) != 0L || !missing(newdata)) {
     # Setup ---
 
-    fcast <- if(length(dots) > 0 && inherits(dots[[1]], "bv_fcast")) {
+    fcast <- if (length(dots) > 0 && inherits(dots[[1]], "bv_fcast")) {
       dots[[1]]
-    } else {bv_fcast(...)}
+    } else {
+      bv_fcast(...)
+    }
 
     # Checks
     n_pres <- object[["meta"]][["n_save"]]
-    n_thin <- int_check(n_thin, min = 1, max = (n_pres / 10),
-      "Issue with n_thin. Maximum allowed is (n_draw - n_burn) / 10.")
+    n_thin <- int_check(
+      n_thin,
+      min = 1,
+      max = (n_pres / 10),
+      "Issue with n_thin. Maximum allowed is (n_draw - n_burn) / 10."
+    )
     n_save <- int_check((n_pres / n_thin), min = 1)
 
     K <- object[["meta"]][["K"]]
@@ -99,65 +104,102 @@ predict.bvar <- function(
     beta <- object[["beta"]]
     sigma <- object[["sigma"]]
 
-    if(missing(newdata)) {
+    if (missing(newdata)) {
       Y <- object[["meta"]][["Y"]]
       N <- object[["meta"]][["N"]]
     } else {
-      if(!all(vapply(newdata, is.numeric, logical(1))) || any(is.na(newdata)) ||
-        ncol(newdata) != M) {stop("Problem with newdata.")}
+      if (
+        !all(vapply(newdata, is.numeric, logical(1))) ||
+          any(is.na(newdata)) ||
+          ncol(newdata) != M
+      ) {
+        stop("Problem with newdata.")
+      }
       Y <- as.matrix(newdata)
       N <- nrow(Y)
     }
 
     # Conditional forecast
     conditional <- !is.null(fcast[["cond_path"]])
-    if(conditional) {
-      constr_mat <- get_constr_mat(horizon = fcast[["horizon"]],
-        path = fcast[["cond_path"]], vars = fcast[["cond_vars"]],
-        object[["variables"]], M)
+    if (conditional) {
+      constr_mat <- get_constr_mat(
+        horizon = fcast[["horizon"]],
+        path = fcast[["cond_path"]],
+        vars = fcast[["cond_vars"]],
+        object[["variables"]],
+        M
+      )
       fcast[["setup"]] <- constr_mat
       irf_store <- object[["irf"]]
-      if(is.null(irf_store) || !irf_store[["setup"]][["identification"]] ||
-        irf_store[["setup"]][["horizon"]] < fcast[["horizon"]]) {
+      if (
+        is.null(irf_store) ||
+          !irf_store[["setup"]][["identification"]] ||
+          irf_store[["setup"]][["horizon"]] < fcast[["horizon"]]
+      ) {
         message("No suitable impulse responses found. Calculating...")
-        irf_store <- irf.bvar(object,
-          horizon = fcast[["horizon"]], identification = TRUE, fevd = FALSE,
-          n_thin = n_thin)
+        irf_store <- irf.bvar(
+          object,
+          horizon = fcast[["horizon"]],
+          identification = TRUE,
+          fevd = FALSE,
+          n_thin = n_thin
+        )
       }
     }
 
     # Sampling ---
 
-    fcast_store <- structure(list(
-      "fcast" = array(NA, c(n_save, fcast[["horizon"]], M)),
-      "setup" = fcast, "variables" = object[["variables"]], "data" = Y),
-      class = "bvar_fcast")
+    fcast_store <- structure(
+      list(
+        "fcast" = array(NA, c(n_save, fcast[["horizon"]], M)),
+        "setup" = fcast,
+        "variables" = object[["variables"]],
+        "data" = Y
+      ),
+      class = "bvar_fcast"
+    )
 
     j <- 1
-    for(i in seq_len(n_save)) {
+    for (i in seq_len(n_save)) {
       beta_comp <- get_beta_comp(beta[j, , ], K = K, M = M, lags = lags)
       fcast_base <- compute_fcast(
-        Y = Y, K = K, M = M, N = N, lags = lags,
+        Y = Y,
+        K = K,
+        M = M,
+        N = N,
+        lags = lags,
         horizon = fcast[["horizon"]],
-        beta_comp = beta_comp, beta_const = beta[j, 1, ])
+        beta_comp = beta_comp,
+        beta_const = beta[j, 1, ]
+      )
 
-      if(conditional) { # Conditional uses impulse responses
+      if (conditional) {
+        # Conditional uses impulse responses
         fcast_store[["fcast"]][i, , ] <- cond_fcast(
-          constr_mat = constr_mat, fcast_base = fcast_base,
+          constr_mat = constr_mat,
+          fcast_base = fcast_base,
           ortho_irf = irf_store[["irf"]][j, , , ],
-          horizon = fcast[["horizon"]], M = M)
-      } else { # Unconditional gets noise
-        fcast_store[["fcast"]][i, , ] <- fcast_base + t(crossprod(sigma[j, , ],
-          matrix(rnorm(M * fcast[["horizon"]]), nrow = M)))
+          horizon = fcast[["horizon"]],
+          M = M
+        )
+      } else {
+        # Unconditional gets noise
+        fcast_store[["fcast"]][i, , ] <- fcast_base +
+          t(crossprod(
+            sigma[j, , ],
+            matrix(rnorm(M * fcast[["horizon"]]), nrow = M)
+          ))
       }
       j <- j + n_thin
     }
   } # End new forecast
 
-  if(is.null(fcast_store[["quants"]]) || !missing(conf_bands)) {
-    fcast_store <- if(!missing(conf_bands)) {
+  if (is.null(fcast_store[["quants"]]) || !missing(conf_bands)) {
+    fcast_store <- if (!missing(conf_bands)) {
       predict.bvar_fcast(fcast_store, conf_bands)
-    } else {predict.bvar_fcast(fcast_store, c(0.16))}
+    } else {
+      predict.bvar_fcast(fcast_store, c(0.16))
+    }
   }
 
   return(fcast_store)
@@ -167,8 +209,7 @@ predict.bvar <- function(
 #' @noRd
 #' @export
 `predict<-.bvar` <- function(object, value) {
-
-  if(!inherits(value, "bvar_fcast")) {
+  if (!inherits(value, "bvar_fcast")) {
     stop("Please provide a `bvar_fcast` object to assign.")
   }
 
@@ -183,8 +224,7 @@ predict.bvar <- function(
 #'
 #' @importFrom stats predict quantile
 predict.bvar_fcast <- function(object, conf_bands, ...) {
-
-  if(!missing(conf_bands)) {
+  if (!missing(conf_bands)) {
     quantiles <- quantile_check(conf_bands)
     object[["quants"]] <- apply(object[["fcast"]], c(2, 3), quantile, quantiles)
   }
@@ -195,4 +235,6 @@ predict.bvar_fcast <- function(object, conf_bands, ...) {
 
 #' @rdname predict.bvar
 #' @export
-`predict<-` <- function(object, value) {UseMethod("predict<-", object)}
+`predict<-` <- function(object, value) {
+  UseMethod("predict<-", object)
+}

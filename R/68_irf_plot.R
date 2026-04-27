@@ -1,4 +1,3 @@
-
 #' Plotting method for Bayesian VAR impulse responses
 #'
 #' Plotting method for impulse responses obtained from \code{\link{irf.bvar}}.
@@ -70,12 +69,22 @@ plot.bvar_irf <- function(
   fill = "#808080",
   variables = NULL,
   mar = c(2, 2, 2, 0.5),
-  ...) {
-
-  if(!inherits(x, "bvar_irf")) {stop("Please provide a `bvar_irf` object.")}
-  plot_irf(x = x,
-    vars_response = vars_response, vars_impulse = vars_impulse,
-    variables = variables, mar = mar, area = area, col = col, fill = fill, ...)
+  ...
+) {
+  if (!inherits(x, "bvar_irf")) {
+    stop("Please provide a `bvar_irf` object.")
+  }
+  plot_irf(
+    x = x,
+    vars_response = vars_response,
+    vars_impulse = vars_impulse,
+    variables = variables,
+    mar = mar,
+    area = area,
+    col = col,
+    fill = fill,
+    ...
+  )
 }
 
 
@@ -89,24 +98,31 @@ plot_irf <- function(
   area = FALSE,
   col = "#737373",
   fill = "#808080",
-  ...) {
-
+  ...
+) {
   # Checks ---
 
-  if(!inherits(x, "bvar") && !inherits(x, "bvar_irf")) {
+  if (!inherits(x, "bvar") && !inherits(x, "bvar_irf")) {
     stop("Please provide a `bvar` or `bvar_irf` object.")
   }
-  if(inherits(x, "bvar")) {x <- irf(x)}
+  if (inherits(x, "bvar")) {
+    x <- irf(x)
+  }
 
   # Prepare data ---
 
   has_quants <- length(dim(x[["quants"]])) == 4L
-  if(has_quants) {
+  if (has_quants) {
     quants <- x[["quants"]]
-    M <- dim(quants)[2]; P <- dim(quants)[1]
+    M <- dim(quants)[2]
+    P <- dim(quants)[1]
   } else {
-    if(area) {message("Cannot plot area without quantiles."); area <- FALSE}
-    M <- dim(x[["quants"]])[1]; P <- 1
+    if (area) {
+      message("Cannot plot area without quantiles.")
+      area <- FALSE
+    }
+    M <- dim(x[["quants"]])[1]
+    P <- 1
     # Cheat day - quants must be 4-dimensional, so we fill with NAs
     quants <- array(NA, c(2, dim(x[["quants"]])))
     quants[1, , , ] <- x[["quants"]]
@@ -114,22 +130,38 @@ plot_irf <- function(
 
   # Prepare other arguments ---
 
-  variables <- name_deps(variables = if(is.null(variables)) {
-    x[["variables"]]} else {variables}, M = M)
+  variables <- name_deps(
+    variables = if (is.null(variables)) {
+      x[["variables"]]
+    } else {
+      variables
+    },
+    M = M
+  )
 
   # Sort out colours - applies alpha if they're HEX and need recycling
   col <- fill_ci_col(x = "#000000", y = col, P = P)
-  if(area) {fill <- fill_ci_col(x = integer(), y = fill, P = P)}
+  if (area) {
+    fill <- fill_ci_col(x = integer(), y = fill, P = P)
+  }
 
   pos_imp <- pos_vars(vars_impulse, variables, M)
   pos_res <- pos_vars(vars_response, variables, M)
 
   mfrow <- c(length(pos_res), length(pos_imp))
 
-  .plot_irf(x = quants, variables = variables,
-    pos_imp = pos_imp, pos_res = pos_res,
-    col = col, mar = mar, mfrow = mfrow,
-    area = area, fill = fill, ...)
+  .plot_irf(
+    x = quants,
+    variables = variables,
+    pos_imp = pos_imp,
+    pos_res = pos_res,
+    col = col,
+    mar = mar,
+    mfrow = mfrow,
+    area = area,
+    fill = fill,
+    ...
+  )
 
   return(invisible(x))
 }
@@ -159,26 +191,39 @@ plot_irf <- function(
   variables,
   pos_imp,
   pos_res,
-  col, mar, mfrow,
-  area = FALSE, fill,
-  ...) {
-
-  if(area) {
+  col,
+  mar,
+  mfrow,
+  area = FALSE,
+  fill,
+  ...
+) {
+  if (area) {
     P <- dim(x)[1]
     x_vals <- c(seq(dim(x)[3]), rev(seq(dim(x)[3])))
   }
   mid <- length(col) %/% 2 + 1
 
   op <- par(mfrow = mfrow, mar = mar, ...)
-  for(i in pos_res) {
-    for(j in pos_imp) {
-       ts.plot(t(as.matrix(x[, i, , j])), col = col, lty = 1,
-        main = paste("Shock", variables[j], "on", variables[i]))
+  for (i in pos_res) {
+    for (j in pos_imp) {
+      ts.plot(
+        t(as.matrix(x[, i, , j])),
+        col = col,
+        lty = 1,
+        main = paste("Shock", variables[j], "on", variables[i])
+      )
       # Fill areas
-      if(area) {for(k in seq(P - 1)) {
-        polygon(y = c(x[k, i, , j], rev(x[k + 1, i, , j])),
-          x = x_vals, col = fill[k], border = NA)
-      }}
+      if (area) {
+        for (k in seq(P - 1)) {
+          polygon(
+            y = c(x[k, i, , j], rev(x[k + 1, i, , j])),
+            x = x_vals,
+            col = fill[k],
+            border = NA
+          )
+        }
+      }
       grid()
       abline(h = 0, lty = "dashed", col = "gray")
       lines(x[mid, i, , j], col = col[mid])

@@ -1,4 +1,3 @@
-
 #' Forecast settings
 #'
 #' Provide forecast settings to \code{\link{predict.bvar}}. Allows adjusting
@@ -46,39 +45,50 @@
 bv_fcast <- function(
   horizon = 12,
   cond_path = NULL,
-  cond_vars = NULL) {
+  cond_vars = NULL
+) {
+  horizon <- int_check(
+    horizon,
+    min = 1,
+    max = 1e6,
+    msg = "Invalid value for horizon (outside of [1, 1e6])."
+  )
 
-  horizon <- int_check(horizon, min = 1, max = 1e6,
-    msg = "Invalid value for horizon (outside of [1, 1e6]).")
+  if (!is.null(cond_path)) {
+    if (!is.numeric(cond_path)) {
+      stop("Invalid type of cond_path.")
+    }
 
-  if(!is.null(cond_path)) {
-    if(!is.numeric(cond_path)) {stop("Invalid type of cond_path.")}
-
-    if(is.vector(cond_path)) {
-      if(is.null(cond_vars)) {
+    if (is.vector(cond_path)) {
+      if (is.null(cond_vars)) {
         stop("Please provide the constrained variable(s) via cond_vars.")
       }
       cond_path <- matrix(cond_path)
     }
 
-    if(!is.null(cond_vars)) {
-      if(!is.null(cond_vars) && ncol(cond_path) != length(cond_vars)) {
+    if (!is.null(cond_vars)) {
+      if (!is.null(cond_vars) && ncol(cond_path) != length(cond_vars)) {
         stop("Dimensions of cond_path and cond_vars do not match.")
       }
-      if(any(duplicated(cond_vars))) {
+      if (any(duplicated(cond_vars))) {
         stop("Duplicated value(s) found in cond_vars.")
       }
     }
 
-    if(nrow(cond_path) > horizon) {
+    if (nrow(cond_path) > horizon) {
       horizon <- nrow(cond_path)
       message("Increasing horizon to the length of cond_path.")
     }
   }
 
-  out <- structure(list(
-    "horizon" = horizon, "cond_path" = cond_path, "cond_vars" = cond_vars),
-    class = "bv_fcast")
+  out <- structure(
+    list(
+      "horizon" = horizon,
+      "cond_path" = cond_path,
+      "cond_vars" = cond_vars
+    ),
+    class = "bv_fcast"
+  )
 
   return(out)
 }

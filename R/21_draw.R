@@ -1,4 +1,3 @@
-
 #' BVAR posterior draws
 #'
 #' Draw \eqn{\beta} and \eqn{\sigma} from the posterior.
@@ -21,9 +20,16 @@
 #'
 #' @noRd
 draw_post <- function(
-  XX, N, M, lags,
-  b, psi, sse, beta_hat, omega_inv) {
-
+  XX,
+  N,
+  M,
+  lags,
+  b,
+  psi,
+  sse,
+  beta_hat,
+  omega_inv
+) {
   S_post <- psi + sse + crossprod((beta_hat - b), omega_inv) %*% (beta_hat - b)
   eta <- rmvn_inv(n = (N + M + 2), sigma_inv = S_post, method = "eigen")
 

@@ -1,4 +1,3 @@
-
 #' Optimised multivariate normal drawing
 #'
 #' Function to quickly draw from a multivariate normal distribution in special
@@ -21,17 +20,18 @@
 #'
 #' @noRd
 rmvn_proposal <- function(n, mean, sigma) {
-
   # Univariate cornercase ---
-  if(length(sigma[["values"]]) == 1) {
+  if (length(sigma[["values"]]) == 1) {
     out <- matrix(rnorm(n, mean = mean, sd = sigma[["values"]]))
     colnames(out) <- names(mean)
     return(out)
   }
   # Multivariate ---
   m <- length(sigma[["values"]])
-  R <- t(sigma[["vectors"]] %*%
-    (t(sigma[["vectors"]]) * sqrt(sigma[["values"]])))
+  R <- t(
+    sigma[["vectors"]] %*%
+      (t(sigma[["vectors"]]) * sqrt(sigma[["values"]]))
+  )
   out <- matrix(rnorm(n * m), nrow = n, ncol = m, byrow = TRUE) %*% R
   out <- sweep(out, 2, mean, "+")
   colnames(out) <- names(mean)
@@ -42,21 +42,26 @@ rmvn_proposal <- function(n, mean, sigma) {
 
 #' @noRd
 rmvn_inv <- function(n, sigma_inv, method) {
-
-  if(method == "eigen") {
+  if (method == "eigen") {
     # Spectral  ---
     sigma_inv <- eigen(sigma_inv, symmetric = TRUE)
     m <- length(sigma_inv[["values"]])
-    R <- t(sigma_inv[["vectors"]] %*%
-      (t(sigma_inv[["vectors"]]) * sqrt(1 / pmax(sigma_inv[["values"]], 0))))
+    R <- t(
+      sigma_inv[["vectors"]] %*%
+        (t(sigma_inv[["vectors"]]) * sqrt(1 / pmax(sigma_inv[["values"]], 0)))
+    )
     out <- matrix(rnorm(n * m), nrow = n, ncol = m, byrow = TRUE) %*% R
-  } else if(method == "chol") {
+  } else if (method == "chol") {
     # Cholesky ---
     m <- ncol(sigma_inv)
     R <- chol(sigma_inv)
-    out <- t(backsolve(R,
-      matrix(rnorm(n * m), nrow = m, ncol = n, byrow = TRUE)))
-  } else {stop("SOMEBODY TOUCHA MY SPAGHET!")}
+    out <- t(backsolve(
+      R,
+      matrix(rnorm(n * m), nrow = m, ncol = n, byrow = TRUE)
+    ))
+  } else {
+    stop("SOMEBODY TOUCHA MY SPAGHET!")
+  }
 
   return(out)
 }

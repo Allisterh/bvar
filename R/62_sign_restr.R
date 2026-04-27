@@ -1,4 +1,3 @@
-
 #' Sign restriction algorithm
 #'
 #' Implements the algorithms by Rubio-Ramirez, Waggoner and Zha (2010) and
@@ -38,15 +37,24 @@
 #' @importFrom stats rnorm
 #'
 #' @noRd
-sign_restr <- function(sigma_chol,
-  sign_restr, M, zero = FALSE, sign_lim = 1000) {
-
+sign_restr <- function(
+  sigma_chol,
+  sign_restr,
+  M,
+  zero = FALSE,
+  sign_lim = 1000
+) {
   counter_outer <- 0L
-  while(TRUE) { # Search for a shock until we exceed the number of tries
-    if(counter_outer > min(sign_lim^.5)) { # Minimum of 10 tries (100^.5)
-      stop(paste0("No matrix fitting the sign restrictions found after ",
-        sign_lim, " tries. Consider increasing the limit via the",
-        "`sign_lim` argument of `bv_irf()` or adapting the restrictions."))
+  while (TRUE) {
+    # Search for a shock until we exceed the number of tries
+    if (counter_outer > min(sign_lim^.5)) {
+      # Minimum of 10 tries (100^.5)
+      stop(paste0(
+        "No matrix fitting the sign restrictions found after ",
+        sign_lim,
+        " tries. Consider increasing the limit via the",
+        "`sign_lim` argument of `bv_irf()` or adapting the restrictions."
+      ))
     }
     counter_outer <- counter_outer + 1L
 
@@ -55,40 +63,50 @@ sign_restr <- function(sigma_chol,
 
     i <- 1L
     counter_inner <- 0L
-    while(!all(pos_check)) {
-      if(counter_inner > min(sign_lim^.6)) break
+    while (!all(pos_check)) {
+      if (counter_inner > min(sign_lim^.6)) {
+        break
+      }
       counter_inner <- counter_inner + 1L # Minimum of 15 tries (100^.6)
 
       # Draw and check a shock
       q_i <- draw_qi(sigma_chol, sign_restr, M, i = i, zero = zero, Q = Q)
       sign_check <- check_qi(q_i, sigma_chol, sr_i = sign_restr[, i])
 
-      if(sign_check != 0L) { # The signs are correct
+      if (sign_check != 0L) {
+        # The signs are correct
         pos_check[i] <- TRUE
         Q[, i] <- q_i * sign_check # Keep or flip the sign of the shock
         i <- i + 1L
       }
     }
 
-    if(all(pos_check)) {return(sigma_chol %*% Q)}
+    if (all(pos_check)) {
+      return(sigma_chol %*% Q)
+    }
   }
 }
 
 #' @noRd
 draw_qi <- function(sigma_chol, sign_restr, M, i, zero = FALSE, Q) {
-
-  if(isTRUE(zero)) { # Zero-sign-restrictions
+  if (isTRUE(zero)) {
+    # Zero-sign-restrictions
     Q <- t(Q)
     sel_row <- which(sign_restr[, i] == 0)
     R <- rbind(sigma_chol[sel_row, ], Q[seq_len(i - 1L), ])
     qr_object <- qr(t(R))
     qr_rank <- qr_object[["rank"]]
-    set <- if(qr_rank == 0) {seq_len(M)} else {-seq_len(qr_rank)}
+    set <- if (qr_rank == 0) {
+      seq_len(M)
+    } else {
+      -seq_len(qr_rank)
+    }
     N_i <- qr.Q(qr_object, complete = TRUE)[, set, drop = FALSE]
     N_stdn <- crossprod(N_i, rnorm(M, 0, 1))
     q_i <- N_i %*% (N_stdn / norm(N_stdn, type = "2"))
-  } else { # Pure sign-restrictions
-    if(i == 1) {
+  } else {
+    # Pure sign-restrictions
+    if (i == 1) {
       x <- rnorm(M, 0, 1)
       q_i <- x / norm(x, type = "2")
     } else {
@@ -103,13 +121,12 @@ draw_qi <- function(sigma_chol, sign_restr, M, i, zero = FALSE, Q) {
 
 #' @noRd
 check_qi <- function(q_i, sigma_chol, sr_i) {
-
   restricted <- which(!is.na(sr_i) & sr_i != 0)
   shock_vec <- sigma_chol %*% q_i
   shock_vec <- sign(shock_vec)
 
   # Return 1L for a fit, -1L for a fit with flipped signs, and 0L for a failure
-  if(identical(shock_vec[restricted], sr_i[restricted])) {
+  if (identical(shock_vec[restricted], sr_i[restricted])) {
     return(1L)
   } else if (identical(-shock_vec[restricted], sr_i[restricted])) {
     return(-1L)

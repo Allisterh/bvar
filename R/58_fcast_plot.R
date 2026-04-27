@@ -1,4 +1,3 @@
-
 #' Plotting method for Bayesian VAR predictions
 #'
 #' Plotting method for forecasts obtained from \code{\link{predict.bvar}}.
@@ -76,12 +75,23 @@ plot.bvar_fcast <- function(
   variables = NULL,
   orientation = c("vertical", "horizontal"),
   mar = c(2, 2, 2, 0.5),
-  ...) {
-
-  if(!inherits(x, "bvar_fcast")) {stop("Please provide a `bvar_fcast` object.")}
-  plot_fcast(x = x, vars = vars,
-    variables = variables, orientation = orientation, mar = mar,
-    t_back = t_back, area = area, col = col, fill = fill, ...)
+  ...
+) {
+  if (!inherits(x, "bvar_fcast")) {
+    stop("Please provide a `bvar_fcast` object.")
+  }
+  plot_fcast(
+    x = x,
+    vars = vars,
+    variables = variables,
+    orientation = orientation,
+    mar = mar,
+    t_back = t_back,
+    area = area,
+    col = col,
+    fill = fill,
+    ...
+  )
 }
 
 
@@ -96,26 +106,34 @@ plot_fcast <- function(
   area = FALSE,
   col = "#737373",
   fill = "#808080",
-  ...) {
-
+  ...
+) {
   # Checks ---
 
-  if(!inherits(x, "bvar") && !inherits(x, "bvar_fcast")) {
+  if (!inherits(x, "bvar") && !inherits(x, "bvar_fcast")) {
     stop("Please provide a `bvar` or `bvar_fcast` object.")
   }
-  if(inherits(x, "bvar")) {x <- predict(x)}
+  if (inherits(x, "bvar")) {
+    x <- predict(x)
+  }
 
   orientation <- match.arg(orientation)
 
   # Prepare data ---
 
   has_quants <- length(dim(x[["quants"]])) == 3L
-  if(has_quants) {
+  if (has_quants) {
     quants <- x[["quants"]]
-    M <- dim(quants)[3]; P <- P2 <- dim(quants)[1]
+    M <- dim(quants)[3]
+    P <- P2 <- dim(quants)[1]
   } else {
-    if(area) {message("Cannot plot area without quantiles."); area <- FALSE}
-    M <- dim(x[["quants"]])[2]; P <- 1; P2 <- 2
+    if (area) {
+      message("Cannot plot area without quantiles.")
+      area <- FALSE
+    }
+    M <- dim(x[["quants"]])[2]
+    P <- 1
+    P2 <- 2
     # Cheat day - quants must be 3-dimensional, so we fill with NAs
     quants <- array(NA, c(2, dim(x[["quants"]])))
     quants[1, , ] <- x[["quants"]]
@@ -125,8 +143,9 @@ plot_fcast <- function(
   t_back <- int_check(t_back, 0, Inf, msg = "Issue with t_back.")
 
   use_data <- t_back != 0
-  if(use_data) {
-    if(is.null(x[["data"]])) { # To support versions prior to 1.0.0
+  if (use_data) {
+    if (is.null(x[["data"]])) {
+      # To support versions prior to 1.0.0
       message("No data found, filling with NAs. Recalculate with `predict()`.")
       t_back <- 0L
     } else {
@@ -134,29 +153,53 @@ plot_fcast <- function(
       t_forw <- x[["setup"]][["horizon"]]
     }
     # Extend the quants array with data, quantiles are set to NA
-    quants <- vapply(seq(M), function(i) {
-      t(rbind(fill_ci_na(data[, i], P2), t(quants[, , i])))
-    }, matrix(0, P2, t_back + t_forw), USE.NAMES = FALSE)
+    quants <- vapply(
+      seq(M),
+      function(i) {
+        t(rbind(fill_ci_na(data[, i], P2), t(quants[,, i])))
+      },
+      matrix(0, P2, t_back + t_forw),
+      USE.NAMES = FALSE
+    )
   }
 
   # Prepare other arguments ---
 
-  variables <- name_deps(variables = if(is.null(variables)) {
-    x[["variables"]]} else {variables}, M = M)
+  variables <- name_deps(
+    variables = if (is.null(variables)) {
+      x[["variables"]]
+    } else {
+      variables
+    },
+    M = M
+  )
 
   # Sort out colours - applies alpha if they're HEX and need recycling
   col <- fill_ci_col(x = "#000000", y = col, P = P)
-  if(area) {fill <- fill_ci_col(x = integer(), y = fill, P = P)}
+  if (area) {
+    fill <- fill_ci_col(x = integer(), y = fill, P = P)
+  }
 
   pos <- pos_vars(vars, variables, M)
 
-  mfrow <- if(grepl("^vertical$", orientation)) {
+  mfrow <- if (grepl("^vertical$", orientation)) {
     c(length(pos), 1)
-  } else {c(1, length(pos))}
+  } else {
+    c(1, length(pos))
+  }
 
-  .plot_fcast(x = quants, variables = variables,
-    pos = pos, col = col, mar = mar, mfrow = mfrow,
-    t_back = t_back, area = area, fill = fill, ...)
+  .plot_fcast(
+    x = quants,
+    variables = variables,
+    pos = pos,
+    col = col,
+    mar = mar,
+    mfrow = mfrow,
+    t_back = t_back,
+    area = area,
+    fill = fill,
+    ...
+  )
 
   return(invisible(x))
 }
@@ -184,27 +227,44 @@ plot_fcast <- function(
   x,
   variables,
   pos,
-  col, mar, mfrow,
+  col,
+  mar,
+  mfrow,
   t_back = 0,
-  area = FALSE, fill,
-  ...) {
-
-  if(area) {
-    excl <- if(t_back > 0) {seq(t_back)} else {0}
+  area = FALSE,
+  fill,
+  ...
+) {
+  if (area) {
+    excl <- if (t_back > 0) {
+      seq(t_back)
+    } else {
+      0
+    }
     P <- dim(x)[1]
     x_vals <- c(seq(dim(x)[2] - t_back), rev(seq(dim(x)[2] - t_back)))
   }
   mid <- length(col) %/% 2 + 1
 
   op <- par(mfrow = mfrow, mar = mar)
-  for(i in pos) {
-    ts.plot(ts(t(as.matrix(x[, , i])), start = (-t_back + 1)),
-      col = col, lty = 1, main = paste("Forecast", variables[i]))
+  for (i in pos) {
+    ts.plot(
+      ts(t(as.matrix(x[,, i])), start = (-t_back + 1)),
+      col = col,
+      lty = 1,
+      main = paste("Forecast", variables[i])
+    )
     # Fill areas
-    if(area) {for(j in seq(P - 1)) {
-      polygon(y = c(x[j, -excl, i], rev(x[j + 1, -excl, i])),
-        x = x_vals, col = fill[j], border = NA)
-    }}
+    if (area) {
+      for (j in seq(P - 1)) {
+        polygon(
+          y = c(x[j, -excl, i], rev(x[j + 1, -excl, i])),
+          x = x_vals,
+          col = fill[j],
+          border = NA
+        )
+      }
+    }
     grid()
     abline(v = 1, lty = "dashed", col = "gray")
     abline(h = 0, lty = "dashed", col = "gray")

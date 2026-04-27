@@ -1,4 +1,3 @@
-
 #' Fitted and residual methods for Bayesian VARs
 #'
 #' Calculates fitted or residual values for Bayesian VAR models generated with
@@ -41,8 +40,11 @@
 #' plot(residuals(x))
 #' }
 fitted.bvar <- function(
-  object, type = c("quantile", "mean"), conf_bands = 0.5, ...) {
-
+  object,
+  type = c("quantile", "mean"),
+  conf_bands = 0.5,
+  ...
+) {
   type <- match.arg(type)
 
   X <- object[["meta"]][["X"]]
@@ -51,10 +53,13 @@ fitted.bvar <- function(
   betas <- coef(object, type, conf_bands)
 
   has_quants <- length(dim(betas)) == 3
-  if(has_quants) {
-    fit <- array(NA, c(dim(betas)[1], N, M),
-      dimnames = list(dimnames(betas)[[1]], NULL, dimnames(betas)[[3]]))
-    for(i in seq_len(dim(betas)[1])) {
+  if (has_quants) {
+    fit <- array(
+      NA,
+      c(dim(betas)[1], N, M),
+      dimnames = list(dimnames(betas)[[1]], NULL, dimnames(betas)[[3]])
+    )
+    for (i in seq_len(dim(betas)[1])) {
       fit[i, , ] <- X %*% betas[i, , ]
     }
   } else {
@@ -69,8 +74,11 @@ fitted.bvar <- function(
 #' @rdname fitted.bvar
 #' @export
 residuals.bvar <- function(
-  object, type = c("quantile", "mean"), conf_bands = 0.5, ...) {
-
+  object,
+  type = c("quantile", "mean"),
+  conf_bands = 0.5,
+  ...
+) {
   type <- match.arg(type)
 
   fit <- fitted.bvar(object, type = type, conf_bands = conf_bands)
@@ -78,9 +86,9 @@ residuals.bvar <- function(
   Y <- object[["meta"]][["Y"]]
 
   has_quants <- length(dim(fit)) == 3
-  if(has_quants) {
+  if (has_quants) {
     resids <- array(NA, dim(fit), dimnames(fit))
-    for(i in seq_len(dim(fit)[1])) {
+    for (i in seq_len(dim(fit)[1])) {
       resids[i, , ] <- Y - fit[i, , ]
     }
   } else {
@@ -95,15 +103,16 @@ residuals.bvar <- function(
 #' @rdname fitted.bvar
 #' @export
 plot.bvar_resid <- function(x, vars = NULL, mar = c(2, 2, 2, 0.5), ...) {
-
   has_quants <- length(dim(x)) == 3
-  if(has_quants) {x <- x["50%", , ]}
+  if (has_quants) {
+    x <- x["50%", , ]
+  }
   M <- dim(x)[2]
   variables <- name_deps(variables = dimnames(x)[[2]], M = M)
   pos <- pos_vars(vars, variables, M)
 
   op <- par(mfrow = c(length(pos), 1), mar = mar, ...)
-  for(i in pos) {
+  for (i in pos) {
     plot(x[, i], main = paste("Residuals", variables[i]))
     abline(h = 0, lty = "dashed", col = "gray")
   }
@@ -115,7 +124,6 @@ plot.bvar_resid <- function(x, vars = NULL, mar = c(2, 2, 2, 0.5), ...) {
 
 #' @export
 print.bvar_fitted <- function(x, digits = 2L, ...) {
-
   print_fitted(x, digits, type = "fitted", ...)
 
   return(invisible(x))
@@ -124,7 +132,6 @@ print.bvar_fitted <- function(x, digits = 2L, ...) {
 
 #' @export
 print.bvar_resid <- function(x, digits = 2L, ...) {
-
   print_fitted(x, digits, type = "residual", ...)
 
   return(invisible(x))
@@ -142,35 +149,58 @@ print.bvar_resid <- function(x, digits = 2L, ...) {
 #'
 #' @noRd
 print_fitted <- function(
-  x, digits = 2L,
-  type = c("fitted", "residual"), ...) {
-
+  x,
+  digits = 2L,
+  type = c("fitted", "residual"),
+  ...
+) {
   type <- match.arg(type)
 
   has_quants <- length(dim(x)) == 3
-  if(has_quants) {
-    N <- dim(x)[2]; M <- dim(x)[3]; P <- dim(x)[1]
+  if (has_quants) {
+    N <- dim(x)[2]
+    M <- dim(x)[3]
+    P <- dim(x)[1]
     variables <- name_deps(variables = dimnames(x)[[3]], M = M)
     top <- x["50%", 1:3, ]
     bot <- x["50%", (N - 2):N, ]
   } else {
-    N <- dim(x)[1]; M <- dim(x)[2]
+    N <- dim(x)[1]
+    M <- dim(x)[2]
     variables <- name_deps(variables = dimnames(x)[[2]], M = M)
     top <- x[1:3, ]
     bot <- x[(N - 2):N, ]
   }
 
-  cat("Numeric array (dimensions ", paste0(dim(x), collapse = ", "),  ")",
-    " with ", type, " values from a BVAR.\n", sep = "")
-  if(has_quants) {
-    cat("Computed confidence bands: ",
-      paste(dimnames(x)[[1]], collapse = ", "), "\n", sep = "")
+  cat(
+    "Numeric array (dimensions ",
+    paste0(dim(x), collapse = ", "),
+    ")",
+    " with ",
+    type,
+    " values from a BVAR.\n",
+    sep = ""
+  )
+  if (has_quants) {
+    cat(
+      "Computed confidence bands: ",
+      paste(dimnames(x)[[1]], collapse = ", "),
+      "\n",
+      sep = ""
+    )
   }
   cat("Median values:\n")
-  for(var in seq_len(M)) {
-    cat("\t", variables[var], ": ",
-      paste0(round(top[, var], digits), collapse = ", "), ", [...], ",
-      paste0(round(bot[, var], digits), collapse = ", "), "\n", sep = "")
+  for (var in seq_len(M)) {
+    cat(
+      "\t",
+      variables[var],
+      ": ",
+      paste0(round(top[, var], digits), collapse = ", "),
+      ", [...], ",
+      paste0(round(bot[, var], digits), collapse = ", "),
+      "\n",
+      sep = ""
+    )
   }
 
   return(invisible(x))

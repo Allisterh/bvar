@@ -1,4 +1,3 @@
-
 #' Log-Likelihood method for Bayesian VARs
 #'
 #' Calculates the log-likelihood of Bayesian VAR models generated with
@@ -32,16 +31,19 @@
 #' logLik(x)
 #' }
 logLik.bvar <- function(object, ...) {
-
   Y <- object[["meta"]][["Y"]]
   N <- object[["meta"]][["N"]]
   K <- object[["meta"]][["K"]]
   mean <- fitted.bvar(object, type = "mean")[]
   sigma <- vcov.bvar(object, type = "mean")[]
 
-  ll <- sum(vapply(seq_len(N), function(i) {
-    dmvnorm(Y[i, ], mean[i, ], sigma, log = TRUE)
-  }, numeric(1)))
+  ll <- sum(vapply(
+    seq_len(N),
+    function(i) {
+      dmvnorm(Y[i, ], mean[i, ], sigma, log = TRUE)
+    },
+    numeric(1)
+  ))
 
   attr(ll, "nall") <- N
   attr(ll, "nobs") <- N
@@ -97,24 +99,31 @@ logLik.bvar <- function(object, ...) {
 #' WAIC(x)
 #' }
 WAIC.bvar <- function(x, n_thin = 1L, ...) {
-
   Y <- x[["meta"]][["Y"]]
   N <- x[["meta"]][["N"]]
   K <- x[["meta"]][["K"]]
 
   n_pres <- x[["meta"]][["n_save"]]
-  n_thin <- int_check(n_thin, min = 1, max = (n_pres / 10),
-    "Issue with n_thin. Maximum allowed is n_save / 10.")
+  n_thin <- int_check(
+    n_thin,
+    min = 1,
+    max = (n_pres / 10),
+    "Issue with n_thin. Maximum allowed is n_save / 10."
+  )
   n_save <- int_check((n_pres / n_thin), min = 1)
 
   # Matrix of log-likelihoods
   ll <- matrix(NA_real_, N, n_save)
-  for(s in seq_len(n_save)) {
+  for (s in seq_len(n_save)) {
     mean <- x[["meta"]][["X"]] %*% x[["beta"]][s, , ]
     sigma <- x[["sigma"]][s, , ]
-    ll[, s] <- vapply(seq_len(N), function(i) {
-      dmvnorm(Y[i, ], mean[i, ], sigma, log = TRUE)
-    }, numeric(1L))
+    ll[, s] <- vapply(
+      seq_len(N),
+      function(i) {
+        dmvnorm(Y[i, ], mean[i, ], sigma, log = TRUE)
+      },
+      numeric(1L)
+    )
   }
 
   # WAIC
@@ -129,7 +138,9 @@ WAIC.bvar <- function(x, n_thin = 1L, ...) {
 
 #' @rdname WAIC.bvar
 #' @export
-WAIC <- function(x, ...) {UseMethod("WAIC", x)}
+WAIC <- function(x, ...) {
+  UseMethod("WAIC", x)
+}
 
 
 #' @rdname WAIC.bvar

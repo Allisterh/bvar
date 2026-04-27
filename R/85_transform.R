@@ -1,4 +1,3 @@
-
 #' FRED transformation and subset helper
 #'
 #' Apply transformations given by FRED-MD or FRED-QD and generate rectangular
@@ -66,16 +65,28 @@
 fred_transform <- function(
   data,
   type = c("fred_qd", "fred_md"),
-  codes, na.rm = TRUE,
-  lag = 1L, scale = 100) {
-
-  if(missing(data)) {
-    return(structure(1:7, names = c("none", "1st-diff", "2nd-diff", "log",
-      "log-diff", "log-2nd-diff", "pct-ch-diff")))
+  codes,
+  na.rm = TRUE,
+  lag = 1L,
+  scale = 100
+) {
+  if (missing(data)) {
+    return(structure(
+      1:7,
+      names = c(
+        "none",
+        "1st-diff",
+        "2nd-diff",
+        "log",
+        "log-diff",
+        "log-2nd-diff",
+        "pct-ch-diff"
+      )
+    ))
   }
 
   # Data
-  if(!all(vapply(data, is.numeric, logical(1))) || !is.data.frame(data)) {
+  if (!all(vapply(data, is.numeric, logical(1))) || !is.data.frame(data)) {
     stop("Problem with the data. Please provide a numeric data.frame.")
   }
   data <- as.data.frame(data) # Deal with tibbles and close #60
@@ -83,30 +94,47 @@ fred_transform <- function(
   vars <- colnames(data)
   rows <- rownames(data)
 
-  if(!missing(codes)) {
-    codes <- vapply(codes, int_check, min = 1L, max = 7L,
-      msg = "Invalid value for code (outside of [1, 7]).", integer(1L))
-    if(length(codes) != ncol(data)) {
+  if (!missing(codes)) {
+    codes <- vapply(
+      codes,
+      int_check,
+      min = 1L,
+      max = 7L,
+      msg = "Invalid value for code (outside of [1, 7]).",
+      integer(1L)
+    )
+    if (length(codes) != ncol(data)) {
       stop("Please provide one transformation code per column.")
     }
   } else {
     codes <- fred_code(paste0("^", vars, "$"), type = type)
   }
 
-  data <- vapply(seq(ncol(data)), function(i, codes, data) {
-    get_transformation(codes[i], lag = lag, scale = scale)(data[, i])
-  }, codes = codes, data = data, FUN.VALUE = numeric(nrow(data)))
+  data <- vapply(
+    seq(ncol(data)),
+    function(i, codes, data) {
+      get_transformation(codes[i], lag = lag, scale = scale)(data[, i])
+    },
+    codes = codes,
+    data = data,
+    FUN.VALUE = numeric(nrow(data))
+  )
 
   na_rows <- apply(data, 1, function(x) sum(is.na(x)))
   na_cols <- apply(data, 2, function(x) sum(is.na(x)))
 
-  if(na.rm) {
+  if (na.rm) {
     used_rows <- na_rows == 0
-    if(!any(used_rows)) {
-      stop("No row without NA values available. Variable ",
-        vars[which.max(na_cols)], " is problematic at ", max(na_cols), " NAs.")
+    if (!any(used_rows)) {
+      stop(
+        "No row without NA values available. Variable ",
+        vars[which.max(na_cols)],
+        " is problematic at ",
+        max(na_cols),
+        " NAs."
+      )
     }
-    if(!all(na_rows[used_rows] == cummax(na_rows[used_rows]))) {
+    if (!all(na_rows[used_rows] == cummax(na_rows[used_rows]))) {
       warning("Rows used to subset are not all sequential.")
     }
     data <- data[used_rows, ]
@@ -126,48 +154,78 @@ fred_transform <- function(
 #'
 #' @importFrom utils read.table
 fred_code <- function(vars, type = c("fred_qd", "fred_md"), table = FALSE) {
+  fred_trans <- read.table(
+    system.file("fred_trans.csv", package = "BVAR"),
+    header = TRUE,
+    sep = ",",
+    na.strings = c("", "NA")
+  )
+  fred_trans[, 2:3] <- lapply(
+    fred_trans[, 2:3],
+    factor,
+    levels = c(
+      "none",
+      "1st-diff",
+      "2nd-diff",
+      "log",
+      "log-diff",
+      "log-2nd-diff",
+      "pct-ch-diff"
+    )
+  )
 
-  fred_trans <- read.table(system.file("fred_trans.csv", package = "BVAR"),
-    header = TRUE, sep = ",", na.strings = c("", "NA"))
-  fred_trans[, 2:3] <- lapply(fred_trans[, 2:3], factor,
-    levels = c("none", "1st-diff", "2nd-diff", "log",
-      "log-diff", "log-2nd-diff", "pct-ch-diff"))
-
-  if(missing(vars)) {
+  if (missing(vars)) {
     return(fred_trans)
   }
 
-  if(!is.character(vars) || length(vars) == 0) {
+  if (!is.character(vars) || length(vars) == 0) {
     stop("Please provide named variables to look up transformation codes.")
   }
   table <- isTRUE(table)
 
-  if(table) {
-    matches <- do.call(c, sapply(vars, grep,
-      fred_trans[["variable"]], simplify = FALSE))
-    if(length(matches) == 0) {message("No transformation code(s) found.")}
+  if (table) {
+    matches <- do.call(
+      c,
+      sapply(vars, grep, fred_trans[["variable"]], simplify = FALSE)
+    )
+    if (length(matches) == 0) {
+      message("No transformation code(s) found.")
+    }
     return(fred_trans[matches, ])
   }
 
   type <- match.arg(type)
 
-  match <- vapply(vars, function(x, y) {
-    out <- grep(paste0("^", x), y)
-    if(length(out) == 0) {out <- NA_integer_}
-    if(length(out) > 1) {
-      message("Mutiple matches for ", x, " found. Using the first one - ",
-        "consider calling with `table = TRUE`.")
-      out <- out[1]
-    }
-    return(out)
-  }, y = fred_trans[["variable"]], FUN.VALUE = integer(1L))
+  match <- vapply(
+    vars,
+    function(x, y) {
+      out <- grep(paste0("^", x), y)
+      if (length(out) == 0) {
+        out <- NA_integer_
+      }
+      if (length(out) > 1) {
+        message(
+          "Mutiple matches for ",
+          x,
+          " found. Using the first one - ",
+          "consider calling with `table = TRUE`."
+        )
+        out <- out[1]
+      }
+      return(out)
+    },
+    y = fred_trans[["variable"]],
+    FUN.VALUE = integer(1L)
+  )
 
   codes <- as.integer(fred_trans[match, type]) # No more factor
 
-  if(any(is.na(codes))) {
-    message("No transformation code(s) for ",
+  if (any(is.na(codes))) {
+    message(
+      "No transformation code(s) for ",
       paste0(vars[is.na(codes)], collapse = ", "),
-      " found. Setting to 1 for no transformation.")
+      " found. Setting to 1 for no transformation."
+    )
     codes[is.na(codes)] <- 1
   }
 
@@ -185,24 +243,45 @@ fred_code <- function(vars, type = c("fred_qd", "fred_md"), table = FALSE) {
 #'
 #' @importFrom utils head
 get_transformation <- function(code, lag = 1L, scale = 100) {
-
   code <- int_check(code, min = 0L, max = 7L, msg = "Code not found.")
   lag <- int_check(lag, min = 1L, max = Inf, msg = "Issue with provided lag.")
   scale <- num_check(scale, min = 1e-16, max = Inf, msg = "Issue with scale.")
 
-  switch(code,
-    function(x) {x}, # No transformation
-    function(x) { # First differences
-      c(rep(NA, lag), diff(x, lag = lag, differences = 1L))},
-    function(x) { # Second differences
-      c(rep(NA, lag * 2), diff(x, lag = lag, differences = 2L))},
-    function(x) {log(x)}, # Logs
-    function(x) { # Log first differences
-      c(rep(NA, lag), diff(log(x), lag = lag, differences = 1L)) * scale},
-    function(x) { # Log second differences
-      c(rep(NA, lag * 2), diff(log(x), lag = lag, differences = 2L)) * scale},
-    function(x) { # Percent-change differences
-      c(rep(NA, lag * 2), diff(x[-seq(lag)] / head(x, length(x) - lag) - 1L,
-        lag = lag, differences = 1L)) * scale}
+  switch(
+    code,
+    function(x) {
+      x
+    }, # No transformation
+    function(x) {
+      # First differences
+      c(rep(NA, lag), diff(x, lag = lag, differences = 1L))
+    },
+    function(x) {
+      # Second differences
+      c(rep(NA, lag * 2), diff(x, lag = lag, differences = 2L))
+    },
+    function(x) {
+      log(x)
+    }, # Logs
+    function(x) {
+      # Log first differences
+      c(rep(NA, lag), diff(log(x), lag = lag, differences = 1L)) * scale
+    },
+    function(x) {
+      # Log second differences
+      c(rep(NA, lag * 2), diff(log(x), lag = lag, differences = 2L)) * scale
+    },
+    function(x) {
+      # Percent-change differences
+      c(
+        rep(NA, lag * 2),
+        diff(
+          x[-seq(lag)] / head(x, length(x) - lag) - 1L,
+          lag = lag,
+          differences = 1L
+        )
+      ) *
+        scale
+    }
   )
 }

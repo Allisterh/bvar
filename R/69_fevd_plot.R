@@ -56,7 +56,6 @@
 #             mar = mar, ...)
 # }
 
-
 # #' @noRd
 # plot_fevd <- function(
 #   x,
@@ -92,7 +91,6 @@
 
 #   return(invisible(x))
 # }
-
 
 # #' Forecast error variance decomposition plot
 # #'

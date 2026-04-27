@@ -1,4 +1,3 @@
-
 #' Impulse response settings and identification
 #'
 #' Provides settings for the computation of impulse responses to
@@ -78,39 +77,62 @@ bv_irf <- function(
   fevd = FALSE,
   identification = TRUE,
   sign_restr = NULL,
-  sign_lim = 1000) {
-
+  sign_lim = 1000
+) {
   # Input checks
-  horizon <- int_check(horizon, min = 1, max = 1e6,
-    msg = "Invalid value for horizon (outside of [1, 1e6]).")
-  sign_lim <- int_check(sign_lim, min = 100, max = Inf,
-    msg = "Invalid value for sign_lim (outside of [100, Inf]).")
+  horizon <- int_check(
+    horizon,
+    min = 1,
+    max = 1e6,
+    msg = "Invalid value for horizon (outside of [1, 1e6])."
+  )
+  sign_lim <- int_check(
+    sign_lim,
+    min = 100,
+    max = Inf,
+    msg = "Invalid value for sign_lim (outside of [100, Inf])."
+  )
 
-  if(!is.logical(c(identification, fevd))){
+  if (!is.logical(c(identification, fevd))) {
     stop("Please provide fevd and identification as logical scalars.")
   }
 
   zero <- FALSE # Zero or sign restrictions
-  if(identification) {
-    if(!is.null(sign_restr)) {
+  if (identification) {
+    if (!is.null(sign_restr)) {
       restr_len <- length(sign_restr)
-      if(!is.numeric(sign_restr) && !all(sign_restr %in% c(-1, 0, NA, 1)) &&
-        sqrt(restr_len) %% 1 != 0) {
-        stop("Please provide sign_restr as a numeric square matrix ",
-          "containing NAs, 1s and -1s (and 0s for zero restrictions).")
+      if (
+        !is.numeric(sign_restr) &&
+          !all(sign_restr %in% c(-1, 0, NA, 1)) &&
+          sqrt(restr_len) %% 1 != 0
+      ) {
+        stop(
+          "Please provide sign_restr as a numeric square matrix ",
+          "containing NAs, 1s and -1s (and 0s for zero restrictions)."
+        )
       }
-      if(0 %in% sign_restr) {zero <- TRUE}
-      if(is.vector(sign_restr)) {
+      if (0 %in% sign_restr) {
+        zero <- TRUE
+      }
+      if (is.vector(sign_restr)) {
         sign_restr <- matrix(sign_restr, nrow = sqrt(restr_len))
       }
-      if(zero && any(colSums(sign_restr == 0, na.rm = TRUE) >
-        rev(seq_len(sqrt(restr_len)) - 1))) {
-        stop("Number of zero restrictions on at least one of the shocks is ",
-          "too high. Please reduce or change the order of variables.")
+      if (
+        zero &&
+          any(
+            colSums(sign_restr == 0, na.rm = TRUE) >
+              rev(seq_len(sqrt(restr_len)) - 1)
+          )
+      ) {
+        stop(
+          "Number of zero restrictions on at least one of the shocks is ",
+          "too high. Please reduce or change the order of variables."
+        )
       }
 
-      if(sum(!is.na(sign_restr)) <
-        (sqrt(restr_len) - 1) * sqrt(restr_len) / 2) {
+      if (
+        sum(!is.na(sign_restr)) < (sqrt(restr_len) - 1) * sqrt(restr_len) / 2
+      ) {
         message("Number of restrictions implies an underidentified system.")
       }
     }
@@ -118,9 +140,12 @@ bv_irf <- function(
   }
 
   # Outputs
-  out <- list("horizon" = horizon, "fevd" = fevd,
+  out <- list(
+    "horizon" = horizon,
+    "fevd" = fevd,
     "identification" = identification,
-    "sign_restr" = sign_restr, "zero" = zero,
+    "sign_restr" = sign_restr,
+    "zero" = zero,
     "sign_lim" = sign_lim
   )
 

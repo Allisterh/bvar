@@ -1,4 +1,3 @@
-
 #' Check numeric scalar
 #'
 #' Check whether an object is bounded and coercible to a numeric value.
@@ -13,11 +12,15 @@
 #'
 #' @noRd
 num_check <- function(
-  x, min = 0, max = Inf,
+  x,
+  min = 0,
+  max = Inf,
   msg = "Please check the numeric parameters.",
-  fun = as.numeric) {
-
-  if(!is.numeric(x) || length(x) != 1 || x < min || x > max) {stop(msg)}
+  fun = as.numeric
+) {
+  if (!is.numeric(x) || length(x) != 1 || x < min || x > max) {
+    stop(msg)
+  }
 
   return(fun(x))
 }
@@ -25,9 +28,11 @@ num_check <- function(
 
 #' @noRd
 int_check <- function(
-  x, min = 0L, max = Inf,
-  msg = "Please check the integer parameters.") {
-
+  x,
+  min = 0L,
+  max = Inf,
+  msg = "Please check the integer parameters."
+) {
   num_check(x, min, max, msg, fun = as.integer)
 }
 
@@ -44,9 +49,16 @@ int_check <- function(
 #'
 #' @noRd
 name_pars <- function(x, M) {
-
-  out <- Reduce(c, sapply(x, function(y) {
-    if(y == "psi") {paste0(y, 1:M)} else {y}}))
+  out <- Reduce(
+    c,
+    sapply(x, function(y) {
+      if (y == "psi") {
+        paste0(y, 1:M)
+      } else {
+        y
+      }
+    })
+  )
 
   return(out)
 }
@@ -71,17 +83,20 @@ name_pars <- function(x, M) {
 #'
 #' @noRd
 fill_ci <- function(x, y, P) {
-
-  n_y <- if(P %% 2 == 0) {
+  n_y <- if (P %% 2 == 0) {
     stop("No central position for x found.")
-  } else {P %/% 2}
+  } else {
+    P %/% 2
+  }
 
   fill <- rep(y, length.out = n_y)
 
-  if(length(x) > 1) { # Matrix
+  if (length(x) > 1) {
+    # Matrix
     n_row <- length(x)
     return(cbind(t(rev(fill))[rep(1, n_row), ], x, t(fill)[rep(1, n_row), ]))
-  } else { # Vector
+  } else {
+    # Vector
     return(c(rev(fill), x, fill))
   }
 }
@@ -89,9 +104,16 @@ fill_ci <- function(x, y, P) {
 
 #' @noRd
 fill_ci_na <- function(x, P) {
-
   # Corner case when quantiles are missing (t_back or conditional forecasts)
-  if(P == 2) {return(if(length(x > 1)) {cbind(x, NA)} else {c(x, NA)})}
+  if (P == 2) {
+    return(
+      if (length(x > 1)) {
+        cbind(x, NA)
+      } else {
+        c(x, NA)
+      }
+    )
+  }
 
   fill_ci(x = x, y = NA, P = P)
 }
@@ -99,9 +121,8 @@ fill_ci_na <- function(x, P) {
 
 #' @noRd
 fill_ci_col <- function(x, y, P) {
-
   # Apply transparency to HEX colours
-  if(length(y) == 1 && is_hex(y, alpha = FALSE)) {
+  if (length(y) == 1 && is_hex(y, alpha = FALSE)) {
     y <- paste0(y, alpha_hex(P))
   }
 
@@ -119,13 +140,18 @@ fill_ci_col <- function(x, y, P) {
 #'
 #' @noRd
 alpha_hex <- function(P) {
-
   n_trans <- P %/% 2
-  out <- switch(n_trans, # Handpicked with love
-    "FF", c("FF", "80"), c("FF", "A8", "54"),
-    c("FF", "BF", "80", "40"), c("FF", "CC", "99", "66", "33"))
+  out <- switch(
+    n_trans, # Handpicked with love
+    "FF",
+    c("FF", "80"),
+    c("FF", "A8", "54"),
+    c("FF", "BF", "80", "40"),
+    c("FF", "CC", "99", "66", "33")
+  )
 
-  if(is.null(out)) { # Let rgb() sort it out otherwise
+  if (is.null(out)) {
+    # Let rgb() sort it out otherwise
     out <- substr(rgb(1, 1, 1, seq(1, 0, length.out = n_trans)), 8, 10)
   }
 
@@ -142,8 +168,9 @@ alpha_hex <- function(P) {
 #'
 #' @noRd
 is_hex <- function(x, alpha = FALSE) {
-
-  if(alpha) return(grepl("^#[0-9a-fA-F]{6,8}$", x))
+  if (alpha) {
+    return(grepl("^#[0-9a-fA-F]{6,8}$", x))
+  }
 
   return(grepl("^#[0-9a-fA-F]{6,6}$", x))
 }
@@ -163,17 +190,24 @@ is_hex <- function(x, alpha = FALSE) {
 #'
 #' @noRd
 pos_vars <- function(vars, variables, M) {
-
-  if(is.null(vars) || length(vars) == 0L) {
+  if (is.null(vars) || length(vars) == 0L) {
     return(1:M) # Full set
   }
-  if(is.numeric(vars)) {
-    return(vapply(vars, int_check, # By position
-      min = 1, max = M, msg = "Variable(s) not found.", integer(1)))
+  if (is.numeric(vars)) {
+    return(vapply(
+      vars,
+      int_check, # By position
+      min = 1,
+      max = M,
+      msg = "Variable(s) not found.",
+      integer(1)
+    ))
   }
-  if(is.character(vars) && !is.null(variables)) {
+  if (is.character(vars) && !is.null(variables)) {
     out <- do.call(c, lapply(vars, grep, variables)) # By name
-    if(length(out) > 0) {return(out)}
+    if (length(out) > 0) {
+      return(out)
+    }
   }
 
   stop("Variable(s) not found.")
@@ -190,10 +224,9 @@ pos_vars <- function(vars, variables, M) {
 #'
 #' @noRd
 name_deps <- function(variables, M) {
-
-  if(is.null(variables)) {
+  if (is.null(variables)) {
     variables <- paste0("var", seq(M))
-  } else if(length(variables) != M) {
+  } else if (length(variables) != M) {
     stop("Vector with variables is incomplete.")
   }
 
@@ -203,12 +236,17 @@ name_deps <- function(variables, M) {
 
 #' @noRd
 name_expl <- function(variables, M, lags) {
-
-  if(is.null(variables)) {
+  if (is.null(variables)) {
     variables <- name_deps(variables, M)
   }
-  explanatories <- c("constant", paste0(rep(variables, lags), "-lag",
-    rep(seq(lags), each = length(variables))))
+  explanatories <- c(
+    "constant",
+    paste0(
+      rep(variables, lags),
+      "-lag",
+      rep(seq(lags), each = length(variables))
+    )
+  )
 
   return(explanatories)
 }
@@ -224,7 +262,6 @@ name_expl <- function(variables, M, lags) {
 #'
 #' @noRd
 p_log_ig <- function(x, shape, scale) {
-
   return(shape * log(scale) - (shape + 1) * log(x) - scale / x - lgamma(shape))
 }
 
@@ -235,8 +272,7 @@ p_log_ig <- function(x, shape, scale) {
 #'
 #' @noRd
 has_package <- function(package) {
-
-  if(!requireNamespace(package, quietly = TRUE)) {
+  if (!requireNamespace(package, quietly = TRUE)) {
     stop("Package \'", package, "\' required for this method.", call. = FALSE)
   }
 
@@ -254,12 +290,18 @@ has_package <- function(package) {
 #'
 #' @noRd
 quantile_check <- function(conf_bands) {
-
-  conf_bands <- sapply(conf_bands, num_check,
-    min = 0 + 1e-16, max = 1 - 1e-16, msg = "Confidence bands misspecified.")
+  conf_bands <- sapply(
+    conf_bands,
+    num_check,
+    min = 0 + 1e-16,
+    max = 1 - 1e-16,
+    msg = "Confidence bands misspecified."
+  )
 
   # Allow only returning the median
-  if(length(conf_bands) == 1 && conf_bands == 0.5) {return(conf_bands)}
+  if (length(conf_bands) == 1 && conf_bands == 0.5) {
+    return(conf_bands)
+  }
 
   # Sort and make sure we have no duplicates (thank mr float)
   quants <- sort(c(conf_bands, 0.5, (1 - conf_bands)))

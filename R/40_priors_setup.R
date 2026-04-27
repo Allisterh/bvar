@@ -1,4 +1,3 @@
-
 #' Prior settings
 #'
 #' Function to provide priors and their parameters to \code{\link{bvar}}. Used
@@ -53,39 +52,62 @@
 bv_priors <- function(
   hyper = "auto",
   mn = bv_mn(),
-  ...) {
-
+  ...
+) {
   # Check inputs ---
 
-  if(!inherits(mn, "bv_minnesota")) { # Require Minnesota prior
+  if (!inherits(mn, "bv_minnesota")) {
+    # Require Minnesota prior
     stop("Please use `bv_mn()` to set the Minnesota prior.")
   }
   dots <- list(...)
-  if(!all(vapply(dots, inherits, TRUE, "bv_dummy"))) {
+  if (!all(vapply(dots, inherits, TRUE, "bv_dummy"))) {
     stop("Please use `bv_dummy()` to set dummy priors.")
   }
-  if(hyper[[1]] == "auto") {
-    hyper <- c(if(!is.null(mn)) {"lambda"}, names(dots))
+  if (hyper[[1]] == "auto") {
+    hyper <- c(
+      if (!is.null(mn)) {
+        "lambda"
+      },
+      names(dots)
+    )
   } else {
-    full <- c(if(!is.null(mn)) {c("lambda", "alpha", "psi")}, names(dots))
-    if(hyper[[1]] == "full") {
+    full <- c(
+      if (!is.null(mn)) {
+        c("lambda", "alpha", "psi")
+      },
+      names(dots)
+    )
+    if (hyper[[1]] == "full") {
       hyper <- full
     } else {
-      if(!all(hyper %in% full)) {stop("Hyperprior not found.")}
+      if (!all(hyper %in% full)) {
+        stop("Hyperprior not found.")
+      }
     }
   }
 
   # Prepare output ---
 
-  out <- if(!is.null(mn)) {
-    structure(list(hyper = hyper,
-      lambda = mn[["lambda"]], alpha = mn[["alpha"]],
-      psi = mn[["psi"]], var = mn[["var"]], b = mn[["b"]],
-      ..., dummy = names(list(...))
-      ), class = "bv_priors")
+  out <- if (!is.null(mn)) {
+    structure(
+      list(
+        hyper = hyper,
+        lambda = mn[["lambda"]],
+        alpha = mn[["alpha"]],
+        psi = mn[["psi"]],
+        var = mn[["var"]],
+        b = mn[["b"]],
+        ...,
+        dummy = names(list(...))
+      ),
+      class = "bv_priors"
+    )
   } else {
-    structure(list(hyper = hyper,
-      ..., dummy = names(list(...))), class = "bv_priors")
+    structure(
+      list(hyper = hyper, ..., dummy = names(list(...))),
+      class = "bv_priors"
+    )
   }
 
   return(out)

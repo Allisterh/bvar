@@ -1,4 +1,3 @@
-
 #' Metropolis-Hastings settings
 #'
 #' Function to provide settings for the Metropolis-Hastings step in
@@ -49,26 +48,38 @@ bv_metropolis <- function(
   scale_hess = 0.01,
   adjust_acc = FALSE,
   adjust_burn = 0.75,
-  acc_lower = 0.25, acc_upper = 0.45,
-  acc_change = 0.01) {
+  acc_lower = 0.25,
+  acc_upper = 0.45,
+  acc_change = 0.01
+) {
+  scale_hess <- vapply(
+    scale_hess,
+    num_check,
+    numeric(1L),
+    min = 1e-16,
+    max = 1e16,
+    msg = "Issue with scale_hess, please check the parameter again."
+  )
 
-  scale_hess <- vapply(scale_hess, num_check, numeric(1L),
-    min = 1e-16, max = 1e16,
-    msg = "Issue with scale_hess, please check the parameter again.")
-
-  if(isTRUE(adjust_acc)) {
+  if (isTRUE(adjust_acc)) {
     adjust_burn <- num_check(adjust_burn, 1e-16, 1, "Issue with adjust_burn.")
     acc_lower <- num_check(acc_lower, 0, 1 - 1e-16, "Issue with acc_lower.")
     acc_upper <- num_check(acc_upper, acc_lower, 1, "Issue with acc_upper.")
     acc_change <- num_check(acc_change, 1e-16, 1e16, "Issue with acc_change")
   }
 
-  out <- structure(list(
-    "scale_hess" = scale_hess,
-    "adjust_acc" = adjust_acc, "adjust_burn" = adjust_burn,
-    "acc_lower" = acc_lower, "acc_upper" = acc_upper,
-    "acc_tighten" = 1 - acc_change, "acc_loosen" = 1 + acc_change),
-    class = "bv_metropolis")
+  out <- structure(
+    list(
+      "scale_hess" = scale_hess,
+      "adjust_acc" = adjust_acc,
+      "adjust_burn" = adjust_burn,
+      "acc_lower" = acc_lower,
+      "acc_upper" = acc_upper,
+      "acc_tighten" = 1 - acc_change,
+      "acc_loosen" = 1 + acc_change
+    ),
+    class = "bv_metropolis"
+  )
 
   return(out)
 }

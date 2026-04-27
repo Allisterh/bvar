@@ -1,4 +1,3 @@
-
 #' Minnesota prior settings
 #'
 #' Provide settings for the Minnesota prior to \code{\link{bv_priors}}. See the
@@ -75,29 +74,51 @@ bv_minnesota <- function(
   alpha = bv_alpha(),
   psi = bv_psi(), # scale, shape, mode
   var = 1e07,
-  b = 1) {
-
+  b = 1
+) {
   # Input checks
   lambda <- lazy_priors(lambda)
   alpha <- lazy_priors(alpha)
-  if(!inherits(psi, "bv_psi")) {stop("Please use `bv_psi()` to set psi.")}
-  var <- num_check(var, min = 1e-16, max = Inf,
-    msg = "Issue with the prior variance var.")
+  if (!inherits(psi, "bv_psi")) {
+    stop("Please use `bv_psi()` to set psi.")
+  }
+  var <- num_check(
+    var,
+    min = 1e-16,
+    max = Inf,
+    msg = "Issue with the prior variance var."
+  )
 
   # Prior mean
-  if(length(b) == 1 && b == "auto") {
+  if (length(b) == 1 && b == "auto") {
     b <- 1
-  } else if(is.numeric(b)) {
-    if(!is.matrix(b)) { # Matrix dimensions are checked later
-      b <- vapply(b, num_check, numeric(1L), min = -1e16, max = 1e16,
-        msg = "Issue with prior mean b, please check the argument again.")
+  } else if (is.numeric(b)) {
+    if (!is.matrix(b)) {
+      # Matrix dimensions are checked later
+      b <- vapply(
+        b,
+        num_check,
+        numeric(1L),
+        min = -1e16,
+        max = 1e16,
+        msg = "Issue with prior mean b, please check the argument again."
+      )
     }
-  } else {stop("Issue with prior mean b, wrong type provided.")}
+  } else {
+    stop("Issue with prior mean b, wrong type provided.")
+  }
 
   # Outputs
-  out <- structure(list(
-    "lambda" = lambda, "alpha" = alpha, "psi" = psi, "b" = b, "var" = var),
-    class = "bv_minnesota")
+  out <- structure(
+    list(
+      "lambda" = lambda,
+      "alpha" = alpha,
+      "psi" = psi,
+      "b" = b,
+      "var" = var
+    ),
+    class = "bv_minnesota"
+  )
 
   return(out)
 }
@@ -111,9 +132,12 @@ bv_mn <- bv_minnesota
 #' @describeIn bv_minnesota Tightness of the Minnesota prior
 #' @export
 bv_lambda <- function(mode = 0.2, sd = 0.4, min = 0.0001, max = 5) {
-
-  sd <- num_check(sd, min = 0 + 1e-16, max = Inf,
-    msg = "Parameter sd misspecified.")
+  sd <- num_check(
+    sd,
+    min = 0 + 1e-16,
+    max = Inf,
+    msg = "Parameter sd misspecified."
+  )
 
   return(
     dummy(mode, min, max, sd = sd, coef = gamma_coef(mode = mode, sd = sd))
@@ -124,7 +148,6 @@ bv_lambda <- function(mode = 0.2, sd = 0.4, min = 0.0001, max = 5) {
 #' @describeIn bv_minnesota Variance decay with increasing lag order
 #' @export
 bv_alpha <- function(mode = 2, sd = 0.25, min = 1, max = 3) {
-
   return(bv_lambda(mode = mode, sd = sd, min = min, max = max))
 }
 
@@ -132,47 +155,84 @@ bv_alpha <- function(mode = 2, sd = 0.25, min = 1, max = 3) {
 #' @describeIn bv_minnesota Prior standard deviation on other lags
 #' @export
 bv_psi <- function(
-  scale = 0.004, shape = 0.004,
-  mode = "auto", min = "auto", max = "auto") {
-
+  scale = 0.004,
+  shape = 0.004,
+  mode = "auto",
+  min = "auto",
+  max = "auto"
+) {
   # Checks ---
 
-  scale <- num_check(scale, min = 1e-16, max = Inf,
-    msg = "Invalid value for scale (outside of (0, Inf]")
-  shape <- num_check(shape, min = 1e-16, max = Inf,
-    msg = "Invalid value for shape (outside of (0, Inf]")
+  scale <- num_check(
+    scale,
+    min = 1e-16,
+    max = Inf,
+    msg = "Invalid value for scale (outside of (0, Inf]"
+  )
+  shape <- num_check(
+    shape,
+    min = 1e-16,
+    max = Inf,
+    msg = "Invalid value for shape (outside of (0, Inf]"
+  )
 
   # Check mode, min and max
-  if(any(mode != "auto")) {
-    mode <- vapply(mode, num_check, numeric(1L), min = 0, max = Inf,
-      msg = "Invalid value(s) for mode (outside of [0, Inf]).")
+  if (any(mode != "auto")) {
+    mode <- vapply(
+      mode,
+      num_check,
+      numeric(1L),
+      min = 0,
+      max = Inf,
+      msg = "Invalid value(s) for mode (outside of [0, Inf])."
+    )
 
-    if(length(min) == 1 && min == "auto") {min <- mode / 100}
-    if(length(max) == 1 && max == "auto") {max <- mode * 100}
+    if (length(min) == 1 && min == "auto") {
+      min <- mode / 100
+    }
+    if (length(max) == 1 && max == "auto") {
+      max <- mode * 100
+    }
 
-    min <- vapply(min, num_check, numeric(1L), min = 0, max = Inf,
-      msg = "Invalid value(s) for min (outside of [0, max)).")
-    max <- vapply(max, num_check, numeric(1L), min = 0, max = Inf,
-      msg = "Invalid value(s) for max (outside of (min, Inf]).")
+    min <- vapply(
+      min,
+      num_check,
+      numeric(1L),
+      min = 0,
+      max = Inf,
+      msg = "Invalid value(s) for min (outside of [0, max))."
+    )
+    max <- vapply(
+      max,
+      num_check,
+      numeric(1L),
+      min = 0,
+      max = Inf,
+      msg = "Invalid value(s) for max (outside of (min, Inf])."
+    )
 
-    if(length(mode) != length(min) || length(mode) != length(max)) {
+    if (length(mode) != length(min) || length(mode) != length(max)) {
       stop("The length of mode and boundaries diverge.")
     }
 
-    if(any(min >= max) || any(min > mode) || any(mode > max)) {
+    if (any(min >= max) || any(min > mode) || any(mode > max)) {
       stop("Invalid values for min / max.")
     }
-
-  } else if(any(c(min != "auto", max != "auto"))) {
+  } else if (any(c(min != "auto", max != "auto"))) {
     stop("Boundaries are only adjustable with a given mode.")
   }
 
   # Outputs ---
 
-  out <- structure(list(
-    "mode" = mode, "min" = min, "max" = max,
-    "coef" = list("k" = shape, "theta" = scale)
-    ), class = "bv_psi")
+  out <- structure(
+    list(
+      "mode" = mode,
+      "min" = min,
+      "max" = max,
+      "coef" = list("k" = shape, "theta" = scale)
+    ),
+    class = "bv_psi"
+  )
 
   return(out)
 }
@@ -180,9 +240,9 @@ bv_psi <- function(
 
 #' @noRd
 lazy_priors <- function(x) {
-
-  if(!inherits(x, "bv_dummy")) {
-    if(length(x) == 4 && is.numeric(x)) { # Allow length 4 numeric vectors
+  if (!inherits(x, "bv_dummy")) {
+    if (length(x) == 4 && is.numeric(x)) {
+      # Allow length 4 numeric vectors
       return(x = bv_lambda(x[1], x[2], x[3], x[4]))
     }
     stop("Please use `bv_lambda()` / `bv_alpha()` to set lambda / alpha.")

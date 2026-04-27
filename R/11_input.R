@@ -1,4 +1,3 @@
-
 #' Lag a matrix
 #'
 #' Compute a lagged version of a matrix to be used in vector autoregressions.
@@ -12,12 +11,11 @@
 #'
 #' @noRd
 lag_var <- function(x, lags) {
-
   x_rows <- nrow(x)
   x_cols <- ncol(x)
 
   x_lagged <- matrix(0, x_rows, lags * x_cols)
-  for(i in 1:lags) {
+  for (i in 1:lags) {
     x_lagged[(lags + 1):x_rows, (x_cols * (i - 1) + 1):(x_cols * i)] <-
       x[(lags + 1 - i):(x_rows - i), (1:x_cols)]
   }
@@ -38,9 +36,8 @@ lag_var <- function(x, lags) {
 #'
 #' @noRd
 gamma_coef <- function(mode, sd) {
-
-  mode_sq <- mode ^ 2
-  sd_sq <- sd ^ 2
+  mode_sq <- mode^2
+  sd_sq <- sd^2
   k <- (2 + mode_sq / sd_sq + sqrt((4 + mode_sq / sd_sq) * mode_sq / sd_sq)) / 2
   theta <- sqrt(sd_sq / k)
 
@@ -67,24 +64,41 @@ gamma_coef <- function(mode, sd) {
 #'
 #' @noRd
 auto_psi <- function(x, lags) {
-
   out <- list("mode" = rep(NA_real_, ncol(x)))
 
-  for(j in seq_len(ncol(x))) {
-    ar_sigma2 <- tryCatch(sqrt(arima(x[, j], order = c(lags, 0, 0))$sigma2),
-      error = function(e) { # If this fails for, increment integration
-        message("Caught an error while automatically setting psi. ",
-          "Column ", j, " appears to be integrated; caught error:\n", e, "\n",
+  for (j in seq_len(ncol(x))) {
+    ar_sigma2 <- tryCatch(
+      sqrt(arima(x[, j], order = c(lags, 0, 0))$sigma2),
+      error = function(e) {
+        # If this fails for, increment integration
+        message(
+          "Caught an error while automatically setting psi. ",
+          "Column ",
+          j,
+          " appears to be integrated; caught error:\n",
+          e,
+          "\n",
           "Attempting to increase order of integration via an ARIMA(",
-          lags, ", 1, 0) model.")
+          lags,
+          ", 1, 0) model."
+        )
         # Integrated ARMA instead
-        tryCatch(sqrt(arima(x[, j], order = c(lags, 1, 0))$sigma2),
+        tryCatch(
+          sqrt(arima(x[, j], order = c(lags, 1, 0))$sigma2),
           error = function(f) {
-            stop("Cannot set psi automatically via ARIMA(", lags, ", 0/1, 0)",
-              "Caught the error:\n", f, "\nPlease inspect the data ",
-              "or provide psi manually (see `?bv_psi`).")
-        })
-      }, warning = function(w) {
+            stop(
+              "Cannot set psi automatically via ARIMA(",
+              lags,
+              ", 0/1, 0)",
+              "Caught the error:\n",
+              f,
+              "\nPlease inspect the data ",
+              "or provide psi manually (see `?bv_psi`)."
+            )
+          }
+        )
+      },
+      warning = function(w) {
         message("Caught a warning while setting psi automatically:\n", w, "\n")
         suppressWarnings(sqrt(arima(x[, j], order = c(lags, 0, 0))$sigma2))
       }
@@ -118,8 +132,6 @@ auto_psi <- function(x, lags) {
 #   return(out)
 # }
 
-
-
 #' Compute companion matrix
 #'
 #' Compute the companion form of the VAR coefficients.
@@ -134,14 +146,13 @@ auto_psi <- function(x, lags) {
 #'
 #' @noRd
 get_beta_comp <- function(beta, K, M, lags) {
-
   beta_comp <- matrix(0, K - 1, K - 1)
 
   beta_comp[1:M, ] <- t(beta[2:K, ]) # Kick constant
-  if(lags > 1) { # Add block-diagonal matrix beneath VAR coefficients
+  if (lags > 1) {
+    # Add block-diagonal matrix beneath VAR coefficients
     beta_comp[(M + 1):(K - 1), 1:(K - 1 - M)] <- diag(M * (lags - 1))
   }
 
   return(beta_comp)
 }
-

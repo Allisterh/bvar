@@ -1,4 +1,3 @@
-
 #' Coefficient and VCOV methods for Bayesian VARs
 #'
 #' Retrieves coefficient / variance-covariance values from Bayesian VAR models
@@ -44,14 +43,19 @@
 #' vcov(x, conf_bands = 0.5)
 #' }
 coef.bvar <- function(
-  object, type = c("quantile", "mean"), conf_bands = 0.5,
-  companion = FALSE, ...) {
-
+  object,
+  type = c("quantile", "mean"),
+  conf_bands = 0.5,
+  companion = FALSE,
+  ...
+) {
   type <- match.arg(type)
 
-  if(companion) {return(companion.bvar(object, type, conf_bands, ...))}
+  if (companion) {
+    return(companion.bvar(object, type, conf_bands, ...))
+  }
 
-  if(type == "quantile") {
+  if (type == "quantile") {
     quantiles <- quantile_check(conf_bands)
     coefs <- apply(object[["beta"]], c(2, 3), quantile, quantiles)
   } else {
@@ -64,7 +68,7 @@ coef.bvar <- function(
   vars <- name_deps(object[["variables"]], M = M)
   vars_expl <- name_expl(vars, M = M, lags = lags)
 
-  if(length(quantiles) == 1) {
+  if (length(quantiles) == 1) {
     dimnames(coefs)[[2]] <- vars
     dimnames(coefs)[[1]] <- vars_expl
   } else {
@@ -81,11 +85,14 @@ coef.bvar <- function(
 #' @rdname coef.bvar
 #' @export
 vcov.bvar <- function(
-  object, type = c("quantile", "mean"), conf_bands = 0.5, ...) {
-
+  object,
+  type = c("quantile", "mean"),
+  conf_bands = 0.5,
+  ...
+) {
   type <- match.arg(type)
 
-  if(type == "quantile") {
+  if (type == "quantile") {
     quantiles <- quantile_check(conf_bands)
     vcovs <- apply(object[["sigma"]], c(2, 3), quantile, quantiles)
   } else {
@@ -95,7 +102,7 @@ vcov.bvar <- function(
 
   vars <- name_deps(object[["variables"]], M = object[["meta"]][["M"]])
 
-  if(length(quantiles) == 1) {
+  if (length(quantiles) == 1) {
     dimnames(vcovs)[[1]] <- dimnames(vcovs)[[2]] <- vars
   } else {
     dimnames(vcovs)[[2]] <- dimnames(vcovs)[[3]] <- vars
@@ -109,7 +116,6 @@ vcov.bvar <- function(
 
 #' @export
 print.bvar_coefs <- function(x, digits = 3L, complete = FALSE, ...) {
-
   .print_coefs(x, digits, type = "coefficient", complete = complete, ...)
 
   return(invisible(x))
@@ -118,10 +124,17 @@ print.bvar_coefs <- function(x, digits = 3L, complete = FALSE, ...) {
 
 #' @export
 print.bvar_vcovs <- function(x, digits = 3L, complete = FALSE, ...) {
+  if (!inherits(x, "bvar_vcovs")) {
+    stop("Please provide a `bvar_vcovs` object.")
+  }
 
-  if(!inherits(x, "bvar_vcovs")) {stop("Please provide a `bvar_vcovs` object.")}
-
-  .print_coefs(x, digits, type = "variance-covariance", complete = complete, ...)
+  .print_coefs(
+    x,
+    digits,
+    type = "variance-covariance",
+    complete = complete,
+    ...
+  )
 
   return(invisible(x))
 }
@@ -139,29 +152,43 @@ print.bvar_vcovs <- function(x, digits = 3L, complete = FALSE, ...) {
 #'
 #' @noRd
 .print_coefs <- function(
-  x, digits = 3L,
+  x,
+  digits = 3L,
   type = c("coefficient", "variance-covariance", "FEVD", "companion"),
   complete = FALSE,
-  ...) {
-
+  ...
+) {
   type <- match.arg(type)
 
   has_quants <- length(dim(x)) == 3
-  if(has_quants) {
+  if (has_quants) {
     P <- dim(x)[1]
     coefs <- x["50%", , ]
     bands <- dimnames(x)[[1]]
-  } else {coefs <- x[]} # Remove class to avoid recursion
+  } else {
+    coefs <- x[]
+  } # Remove class to avoid recursion
 
-  cat("Numeric array (dimensions ", paste0(dim(x), collapse = ", "),  ")",
-    " of ", type, " values from a BVAR.\n", sep = "")
-  if(has_quants) {
-    cat("Computed confidence bands: ",
-      paste(bands, collapse = ", "), "\n", sep = "")
+  cat(
+    "Numeric array (dimensions ",
+    paste0(dim(x), collapse = ", "),
+    ")",
+    " of ",
+    type,
+    " values from a BVAR.\n",
+    sep = ""
+  )
+  if (has_quants) {
+    cat(
+      "Computed confidence bands: ",
+      paste(bands, collapse = ", "),
+      "\n",
+      sep = ""
+    )
   }
-  if(complete && has_quants) {
+  if (complete && has_quants) {
     cat("Values:\n")
-    for(band in bands) {
+    for (band in bands) {
       cat("    ", band, ":\n", sep = "")
       print(round(x[band, , ], digits = digits))
     }
