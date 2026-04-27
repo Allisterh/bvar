@@ -55,6 +55,7 @@ expect_silent(bv_sur(mode = 2, sd = 1, min = 0.01, max = 50))
 expect_silent(priors <- bv_priors(hyper = "auto", mn = mn,
   sur = bv_sur(), soc = bv_soc(), custom = dummy))
 expect_silent(print(priors))
+expect_silent(plot(priors))
 expect_equal(
   bv_priors(hyper = c("lambda", "alpha", "psi")),
   bv_priors(hyper = c("full")))
