@@ -76,7 +76,7 @@ options(prompt = "R> ", continue = "+  ", width = 70, useFancyQuotes = FALSE)
   FRED-MD, Bayesian econometrics}
 \Plainkeywords{vector autoregression (VAR), multivariate, time series,
   macroeconomics, structural analysis, hierarchical model,
-  forecast, impulse respose, identification, Minnesota prior,
+  forecast, impulse response, identification, Minnesota prior,
   FRED-MD, Bayesian econometrics}
 %% - \Address{} of at least one author
 %% - May contain multiple affiliations for each author

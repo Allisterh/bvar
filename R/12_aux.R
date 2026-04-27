@@ -107,7 +107,7 @@ fill_ci_na <- function(x, P) {
   # Corner case when quantiles are missing (t_back or conditional forecasts)
   if (P == 2) {
     return(
-      if (length(x > 1)) {
+      if (length(x) > 1) {
         cbind(x, NA)
       } else {
         c(x, NA)

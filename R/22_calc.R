@@ -67,12 +67,12 @@ calc_ev <- function(
   omega_ldet <- determinant.matrix(
     diag(NCOL(omega_ml)) +
       omega_ml,
-    log = TRUE
+    logarithm = TRUE
   )[[1]]
   psi_ldet <- determinant.matrix(
     diag(NCOL(psi_ml)) +
       psi_ml,
-    log = TRUE
+    logartithm = TRUE
   )[[1]]
 
   return(

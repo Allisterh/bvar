@@ -10,7 +10,7 @@
 #' length of \emph{cl}, i.e. the number of registered nodes.
 #' @inheritParams bvar
 #'
-#' @return Returns a list of class \code{bvar_chain} with \code{bvar} objects.
+#' @return Returns a list of class \code{bvar_chains} with \code{bvar} objects.
 #'
 #' @seealso \code{\link{bvar}}; \code{\link[parallel]{parLapply}}
 #'
