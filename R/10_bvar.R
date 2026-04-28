@@ -368,7 +368,7 @@ bvar <- function(
     HH_eig[["values"]] <- pmax(HH_eig[["values"]], 1e-12)
     HH <- HH_eig
   } else {
-    HH <- list("values" = pmax(HH, 1e-12))
+    HH <- list("values" = pmax(sqrt(HH), 1e-12))
   }
 
   # Initial draw ---
