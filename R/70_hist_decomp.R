@@ -6,8 +6,9 @@
 #' @param type Character scalar. Whether to use median or mean values.
 #' @param ... Not used.
 #'
-#' @return Returns a numerical array (time, variable, shock) with the results
-#' of the historical decomposition.
+#' @return Returns a list of class \code{bvar_hd} with elements \code{hd}
+#' (a numerical array of dimensions time, variable, shock), \code{variables}
+#' and \code{type}.
 #'
 #' @keywords BVAR historical decomposition hd
 #'
@@ -35,7 +36,29 @@ hist_decomp.bvar <- function(x, type = c("mean", "quantile"), ...) {
   comp <- companion(x, type = type)
   eps <- solve(shock[seq(x[["meta"]][["M"]]), ], t(residuals(x, type = type)))
 
-  out <- compute_hd(x, shock, comp, eps)
+  hd <- compute_hd(x, shock, comp, eps)
+
+  M <- x[["meta"]][["M"]]
+  vars <- name_deps(x[["variables"]], M = M)
+  time_names <- rownames(x[["meta"]][["Y"]])
+  if (is.null(time_names) || length(time_names) != dim(hd)[1]) {
+    time_names <- as.character(seq_len(dim(hd)[1]))
+  }
+
+  dimnames(hd) <- list(
+    "time" = time_names,
+    "variable" = vars,
+    "shock" = vars
+  )
+
+  out <- structure(
+    list(
+      "hd" = hd,
+      "variables" = vars,
+      "type" = type
+    ),
+    class = "bvar_hd"
+  )
 
   return(out)
 }

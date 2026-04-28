@@ -45,6 +45,7 @@ expect_silent(
 )
 expect_silent(print(mh))
 expect_silent(mh <- bv_mh(proposal_scale = "hessian"))
+expect_equal(bv_mh(proposal_scale = "hessian")[["scale_hess"]], 1)
 
 # Faulty arguments
 expect_error(bv_mh(scale_hess = -1))
@@ -246,6 +247,7 @@ expect_silent(print(fevd(run) <- fevd(run))) # Access
 expect_silent(print(fevd(run2))) # Recalculates
 expect_silent(print(fevd(irfs2))) # Recalculates
 expect_silent(plot(irfs1, vars_res = 1, vars_imp = 1))
+expect_silent(plot(fevd(irfs1), vars = 1:2))
 
 
 # 80_coda ---
@@ -352,6 +354,35 @@ expect_silent(print(companion(run, conf_bands = 0.1)))
 
 expect_silent(print(hist_decomp(run, type = "mean")))
 expect_silent(print(hist_decomp(run, type = "quantile")))
+expect_silent(plot(hist_decomp(run, type = "mean")))
+expect_silent(plot(
+  hist_decomp(run, type = "mean"),
+  vars_response = 1,
+  vars_shock = 1:2
+))
+expect_silent(plot(fevd(run)))
+
+hd_mean <- hist_decomp(run, type = "mean")
+fevd_run <- fevd(run)
+expect_silent(plot(fevd_run, vars = 1))
+expect_silent(plot(
+  fevd_run,
+  vars = "var1",
+  mar = c(2, 2, 1, 0.5)
+))
+
+expect_silent(plot(hd_mean, include_total = FALSE))
+expect_silent(plot(hd_mean, drop_zeros = FALSE))
+expect_silent(plot(
+  hd_mean,
+  vars_response = "var1",
+  vars_shock = c("var1", "var2"),
+  col = c("#E69F00", "#56B4E9"),
+  total_col = "#000000",
+  border = "#FFFFFF"
+))
+expect_error(plot(hd_mean, vars_response = "not_a_var"))
+
 expect_silent(print(rmse(run)))
 expect_silent(print(rmse(run, holdout = data2[1:10, ])))
 expect_silent(print(lps(run)))

@@ -28,7 +28,7 @@ plot.bv_priors <- function(x, mar = c(2, 2, 2, 0.5), ...) {
     0L
   }
   n_plots <- if (!is.null(x[["lambda"]])) {
-    2L + psi_plot_n
+    2L + psi_plot_n + length(dummies)
   } else {
     0L + length(dummies)
   }
@@ -37,18 +37,23 @@ plot.bv_priors <- function(x, mar = c(2, 2, 2, 0.5), ...) {
     return(invisible(x))
   }
 
-  op <- par(mfrow = c(n_plots, 1), mar = mar, ...)
-
+  op <- par(
+    mfrow = if (n_plots > 4) {
+      c(ceiling(n_plots / 2), 2)
+    } else {
+      c(n_plots, 1)
+    },
+    mar = mar,
+    ...
+  )
   if (!is.null(x[["lambda"]])) {
     .plot_bv_minnesota(x)
   }
-
   if (length(dummies) > 0) {
     for (dummy in dummies) {
       .plot_bv_dummy(x[[dummy]], name = dummy)
     }
   }
-
   par(op)
 
   return(invisible(x))
