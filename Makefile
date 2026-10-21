@@ -1,0 +1,33 @@
+PKG       := BVAR
+VERSION   := $(shell sed -n 's/^Version: *//p' DESCRIPTION)
+TARBALL   := $(PKG)_$(VERSION).tar.gz
+R         := Rscript
+RUN_TESTS := RUN_TESTS=true BVAR_RUN_TESTS=true
+CHECK_ENV := _R_CHECK_FORCE_SUGGESTS_=false
+VIGNETTES := --no-build-vignettes  # override with empty value if LaTeX is available
+
+.PHONY: all document install build check test coverage clean
+
+all: check coverage
+
+document:
+	$(R) -e 'roxygen2::roxygenise()'
+
+install: document
+	R CMD INSTALL --no-multiarch .
+
+build: document
+	R CMD build $(VIGNETTES) .
+
+check: build
+	$(RUN_TESTS) $(CHECK_ENV) R CMD check --no-manual $(VIGNETTES) $(TARBALL)
+
+test: install
+	$(RUN_TESTS) $(R) -e 'tinytest::test_package("$(PKG)", at_home = TRUE)'
+
+coverage:
+	@mkdir -p scratch
+	$(RUN_TESTS) $(R) -e 'cov <- covr::package_coverage(); print(cov); covr::to_cobertura(cov, filename = "scratch/coverage.xml")'
+
+clean:
+	rm -rf $(PKG)_*.tar.gz $(PKG).Rcheck scratch/coverage.xml

@@ -1,6 +1,8 @@
 
 ### Custom
 
+scratch/
+
 # These would include copyrighted data
 data/fred_qd_full.rda
 data/fred_md_full.rda

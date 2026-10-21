@@ -37,6 +37,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Nikolas Kuschnig \email{nikolas.kuschnig@wu.ac.at} (\href{https://orcid.org/0000-0002-6642-2543}{ORCID})
   \item Lukas Vashold (\href{https://orcid.org/0000-0002-3562-3414}{ORCID})
 }
 

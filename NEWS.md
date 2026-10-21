@@ -1,4 +1,23 @@
 
+# v1.1.0, Internal Release
+
+- Add `fred_download()` to help read up-to-date vintages from the web
+  - Update the FRED-MD and FRED-QD datasets to the 2026-09 vintage
+- Add plotting methods for historical decompositions and FEVDs
+  (`plot.bvar_hd()`, `plot.bvar_fevd()`), with summary and print methods
+  for historical decompositions
+- Add a plotting method for prior settings (`plot.bv_priors()`)
+- Improve Metropolis-Hastings proposals using the inverse Hessian
+  - New `proposal_scale` argument, defaulting to `"hessian"`; the function
+    falls back to diagonal scaling (with a warning) if the Hessian is
+    unusable
+  - *Note* that this changes results relative to v1.0.5 for identical seeds,
+    and that fallback now warns instead of only reporting when `verbose`
+- Use LU/LAPACK routines to compute determinants
+- Fix a bug in the conditional forecast fill and several typos
+- Internally reformat the code base with *air*
+
+
 # v1.0.5, CRAN Update 10
 - Add historical decompositions and RMSE/LPS, and WAIC for analysis
 - Improve the algorithm to draw sign restrictions

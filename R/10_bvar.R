@@ -313,19 +313,27 @@ bvar <- function(
   }
 
   HH <- NULL
-  if (
-    mh[["proposal_scale"]] == "hessian" &&
-      identical(opt[["convergence"]], 0L) &&
-      !is.null(opt[["hessian"]]) &&
-      all(is.finite(opt[["hessian"]]))
-  ) {
+  if (mh[["proposal_scale"]] == "hessian") {
+    hess_scale <- mh[["scale_hess"]]
+    if (length(hess_scale) == 1L && hess_scale == 0.01) {
+      hess_scale <- 1 # The default implies an unscaled inverse Hessian
+    }
     HH <- tryCatch(
       {
-        H_inv <- chol2inv(chol(-opt$hessian))
-        if (length(mh[["scale_hess"]]) == 1) {
-          H_inv <- H_inv * mh[["scale_hess"]]
+        if (
+          !isTRUE(opt[["convergence"]] == 0) ||
+            is.null(opt[["hessian"]]) ||
+            !all(is.finite(opt[["hessian"]]))
+        ) {
+          stop("optimisation did not yield a usable Hessian")
+        }
+        H <- -opt[["hessian"]]
+        H <- (H + t(H)) / 2
+        H_inv <- chol2inv(chol(H))
+        if (length(hess_scale) == 1L) {
+          H_inv <- H_inv * hess_scale
         } else {
-          S <- diag(mh[["scale_hess"]], nrow = nrow(H_inv))
+          S <- diag(hess_scale, nrow = nrow(H_inv))
           H_inv <- S %*% H_inv %*% S
         }
         if (verbose) {
@@ -334,9 +342,11 @@ bvar <- function(
         H_inv
       },
       error = function(e) {
-        if (verbose) {
-          cat("Falling back to diagonal proposal scaling.\n")
-        }
+        warning(
+          "Falling back to diagonal proposal scaling (",
+          conditionMessage(e),
+          ")."
+        )
         NULL
       }
     )

@@ -45,7 +45,9 @@ expect_silent(
 )
 expect_silent(print(mh))
 expect_silent(mh <- bv_mh(proposal_scale = "hessian"))
-expect_equal(bv_mh(proposal_scale = "hessian")[["scale_hess"]], 1)
+expect_equal(bv_mh()[["proposal_scale"]], "hessian")
+expect_equal(bv_mh(proposal_scale = "hessian")[["scale_hess"]], 0.01)
+expect_silent(bv_mh(proposal_scale = "hessian", scale_hess = c(0.5, 0.5)))
 
 # Faulty arguments
 expect_error(bv_mh(scale_hess = -1))
@@ -89,6 +91,15 @@ expect_silent(
 )
 expect_silent(print(priors))
 expect_silent(plot(priors))
+
+# Psi prior plots skip modes set to "auto" and return the object invisibly
+priors_psi <- bv_priors(mn = bv_mn(psi = bv_psi(mode = c(0.5, 1, 2))))
+priors_psi[["psi"]][["mode"]][2] <- "auto"
+pdf(tempfile())
+expect_silent(priors_psi_plot <- plot(priors_psi))
+dev.off()
+expect_identical(priors_psi_plot, priors_psi)
+
 expect_equal(
   bv_priors(hyper = c("lambda", "alpha", "psi")),
   bv_priors(hyper = c("full"))
@@ -219,6 +230,51 @@ expect_silent(
   )
 )
 
+# Diagonal proposal scaling with the Jacobian, for one and several hypers
+expect_silent(
+  run_diag <- bvar(
+    data[, 1:2],
+    lags = 1,
+    mh = bv_mh(proposal_scale = "diag"),
+    n_draw = 100L,
+    n_burn = 20L,
+    verbose = FALSE
+  )
+)
+expect_true(all(is.finite(run_diag[["hyper"]])))
+
+expect_silent(
+  run_diag_psi <- bvar(
+    data[, 1:2],
+    lags = 1,
+    priors = bv_priors(hyper = c("lambda", "psi")),
+    mh = bv_mh(proposal_scale = "diag"),
+    n_draw = 100L,
+    n_burn = 20L,
+    verbose = FALSE
+  )
+)
+expect_true(all(is.finite(run_diag_psi[["hyper"]])))
+
+# Prior modes that overflow the Jacobian are reported
+expect_error(
+  bvar(
+    data[, 1:2],
+    lags = 1,
+    priors = bv_priors(
+      hyper = "lambda",
+      mn = bv_mn(lambda = bv_lambda(
+        mode = 1e4, sd = 1e4, min = 1e4, max = 1e12
+      ))
+    ),
+    mh = bv_mh(proposal_scale = "diag"),
+    n_draw = 100L,
+    n_burn = 20L,
+    verbose = FALSE
+  ),
+  "mode\\(s\\) may be too large"
+)
+
 
 # 5*_fcast ---
 
@@ -306,6 +362,9 @@ expect_equivalent(
 
 expect_message(fred_code("A"))
 expect_message(fred_code("Temperature"))
+
+expect_error(fred_download("invalid"))
+expect_error(fred_download("md", "2026-9"))
 
 
 # 9*_methods ---

@@ -2,6 +2,9 @@
 print.bv_metropolis <- function(x, ...) {
   cat(
     "Object with settings for the Metropolis-Hastings step in `bvar()`.\n",
+    "Proposal scaling: ",
+    x[["proposal_scale"]],
+    "\n",
     "Scaling parameter: ",
     paste0(x[["scale_hess"]], collapse = ", "),
     "\n",

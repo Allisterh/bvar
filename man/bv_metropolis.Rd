@@ -11,7 +11,8 @@ bv_metropolis(
   adjust_burn = 0.75,
   acc_lower = 0.25,
   acc_upper = 0.45,
-  acc_change = 0.01
+  acc_change = 0.01,
+  proposal_scale = c("hessian", "diag")
 )
 
 bv_mh(
@@ -20,7 +21,8 @@ bv_mh(
   adjust_burn = 0.75,
   acc_lower = 0.25,
   acc_upper = 0.45,
-  acc_change = 0.01
+  acc_change = 0.01,
+  proposal_scale = c("hessian", "diag")
 )
 }
 \arguments{
@@ -41,6 +43,16 @@ acceptance rate. Required if \emph{adjust_acc} is set to \code{TRUE}.}
 \item{acc_change}{Numeric scalar. Percent change applied to the Hessian
 matrix for tuning acceptance rate. Required if \emph{adjust_acc} is set to
 \code{TRUE}.}
+
+\item{proposal_scale}{Character scalar. How to scale the proposal
+distribution of the hyperparameters. Either \code{"hessian"} (default),
+which uses the inverse Hessian from the initial optimisation, or
+\code{"diag"}, which uses a diagonal scaling mapped through the
+parameters' Jacobian. \code{"hessian"} is only used if the optimisation
+converged and the Hessian is positive definite, otherwise the function
+falls back to \code{"diag"}. With \code{"hessian"} the default
+\code{scale_hess = 0.01} is interpreted as \code{1}, i.e. the unscaled
+inverse Hessian.}
 }
 \value{
 Returns a named list of class \code{bv_metropolis} with options for

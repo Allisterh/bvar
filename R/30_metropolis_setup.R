@@ -15,6 +15,15 @@
 #' the range of hyperparameter draws. Should be calibrated so a reasonable
 #' acceptance rate is reached. If provided as vector the length must equal
 #' the number of hyperparameters (one per variable for \code{psi}).
+#' @param proposal_scale Character scalar. How to scale the proposal
+#' distribution of the hyperparameters. Either \code{"hessian"} (default),
+#' which uses the inverse Hessian from the initial optimisation, or
+#' \code{"diag"}, which uses a diagonal scaling mapped through the
+#' parameters' Jacobian. \code{"hessian"} is only used if the optimisation
+#' converged and the Hessian is positive definite, otherwise the function
+#' falls back to \code{"diag"}. With \code{"hessian"} the default
+#' \code{scale_hess = 0.01} is interpreted as \code{1}, i.e. the unscaled
+#' inverse Hessian.
 #' @param adjust_acc Logical scalar. Whether or not to further scale the
 #' variability of parameter draws during the burn-in phase.
 #' @param adjust_burn Numeric scalar. How much of the burn-in phase should be
@@ -51,12 +60,9 @@ bv_metropolis <- function(
   acc_lower = 0.25,
   acc_upper = 0.45,
   acc_change = 0.01,
-  proposal_scale = c("diag", "hessian")
+  proposal_scale = c("hessian", "diag")
 ) {
   proposal_scale <- match.arg(proposal_scale)
-  if (proposal_scale == "hessian" && scale_hess == 0.01) {
-    scale_hess <- 1 # We get the default scale from the Hessian
-  }
   scale_hess <- vapply(
     scale_hess,
     num_check,

@@ -23,7 +23,7 @@
 #'
 #' @format A \code{data.frame} object with dates as rownames.
 #'
-#' @seealso \code{\link{fred_transform}}
+#' @seealso \code{\link{fred_transform}}, \code{\link{fred_download}}
 #'
 #' @keywords FRED macroeconomics
 #'
@@ -39,3 +39,89 @@
 
 #' @rdname fred_qd
 "fred_md"
+
+#' Download a FRED-MD or FRED-QD vintage
+#'
+#' Downloads a vintage of the FRED-MD or FRED-QD database as a numeric
+#' \code{data.frame}, matching the structure of \code{\link{fred_md}}
+#' and \code{\link{fred_qd}}. See
+#' \url{https://research.stlouisfed.org/econ/mccracken/fred-databases/}
+#'
+#' Metadata rows are removed. Unlike the packaged datasets, the result
+#' is not restricted to series that BVAR may redistribute.
+#'
+#' @param type Character; either \code{"qd"} (quarterly) or \code{"md"}
+#'   (monthly).
+#' @param vintage Character; defaults to the latest release, or
+#'   a specific vintage in \code{"YYYY-MM"} format. Only recent
+#'   vintages may be available.
+#' @param ... Passed on to \code{\link[utils]{read.csv}}.
+#'
+#' @return A numeric \code{data.frame} with \code{Date} rownames.
+#'
+#' @seealso \code{\link{fred_transform}}, \code{\link{fred_md}},
+#'   \code{\link{fred_qd}}
+#'
+#' @examples
+#' \dontrun{
+#' fred_download("md")
+#' fred_download("md", "2026-09")
+#' fred_download("qd", "2026-08")
+#' }
+#'
+#' @export
+fred_download <- function(
+  type = c("qd", "md"),
+  vintage = format(Sys.Date() - 31L, "%Y-%m"),
+  ...
+) {
+  type <- match.arg(type)
+  if (!grepl("^[0-9]{4}-[0-9]{2}$", vintage)) {
+    stop("Please provide a vintage in 'YYYY-MM' format, e.g. '2026-09'.")
+  }
+  link <- paste0(
+    "https://www.stlouisfed.org/-/media/project/frbstl/stlouisfed/research/",
+    "fred-md/",
+    if (type == "qd") "quarterly/" else "monthly/",
+    vintage,
+    "-",
+    type,
+    ".csv"
+  )
+  # Temporary CSV to download
+  file <- tempfile(fileext = ".csv")
+  on.exit(unlink(file), add = TRUE)
+
+  status <- tryCatch(
+    suppressWarnings(
+      utils::download.file(link, file, quiet = TRUE, mode = "wb")
+    ),
+    error = function(e) 1L
+  )
+  if (!identical(status, 0L)) {
+    stop("Failed to download FRED data from:\n\t", link)
+  }
+
+  data <- utils::read.csv(file, ...)
+
+  n_labels <- if (type == "qd") 2L else 1L
+  if (
+    !"sasdate" %in% names(data) ||
+      ncol(data) < 2L ||
+      nrow(data) <= n_labels
+  ) {
+    stop("Unexpected FRED CSV format.")
+  }
+  # Remove metadata and empty rows
+  data <- data[-seq_len(n_labels), , drop = FALSE]
+  data <- data[!is.na(data$sasdate) & nzchar(data$sasdate), , drop = FALSE]
+
+  dates <- as.Date(data$sasdate, "%m/%d/%Y")
+  if (anyNA(dates) || anyDuplicated(dates)) {
+    stop("Invalid dates in FRED CSV.")
+  }
+  rownames(data) <- dates
+  data$sasdate <- NULL
+
+  return(data)
+}

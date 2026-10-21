@@ -22,6 +22,7 @@ S3method(irf,default)
 S3method(logLik,bvar)
 S3method(lps,bvar)
 S3method(lps,default)
+S3method(plot,bv_priors)
 S3method(plot,bvar)
 S3method(plot,bvar_chains)
 S3method(plot,bvar_density)
@@ -30,7 +31,6 @@ S3method(plot,bvar_fevd)
 S3method(plot,bvar_hd)
 S3method(plot,bvar_irf)
 S3method(plot,bvar_resid)
-S3method(plot,bv_priors)
 S3method(predict,bvar)
 S3method(predict,bvar_fcast)
 S3method(print,bv_dummy)
@@ -84,6 +84,7 @@ export(bvar)
 export(companion)
 export(fevd)
 export(fred_code)
+export(fred_download)
 export(fred_transform)
 export(hist_decomp)
 export(independent_index)
@@ -92,40 +93,48 @@ export(lps)
 export(par_bvar)
 export(rmse)
 importFrom(grDevices,rgb)
-importFrom(graphics,abline)
-importFrom(graphics,axis)
-importFrom(graphics,barplot)
-importFrom(graphics,box)
-importFrom(graphics,grid)
-importFrom(graphics,legend)
-importFrom(graphics,lines)
-importFrom(graphics,par)
-importFrom(graphics,plot)
-importFrom(graphics,plot.new)
-importFrom(graphics,plot.window)
-importFrom(graphics,polygon)
-importFrom(graphics,title)
-importFrom(mvtnorm,dmvnorm)
-importFrom(mvtnorm,rmvnorm)
-importFrom(stats,arima)
-importFrom(stats,coef)
-importFrom(stats,density)
-importFrom(stats,dgamma)
-importFrom(stats,dnorm)
-importFrom(stats,fitted)
-importFrom(stats,logLik)
-importFrom(stats,optim)
-importFrom(stats,predict)
-importFrom(stats,quantile)
-importFrom(stats,resid)
-importFrom(stats,residuals)
-importFrom(stats,rnorm)
-importFrom(stats,runif)
-importFrom(stats,ts)
-importFrom(stats,ts.plot)
-importFrom(stats,vcov)
-importFrom(utils,head)
-importFrom(utils,read.table)
-importFrom(utils,setTxtProgressBar)
-importFrom(utils,tail)
-importFrom(utils,txtProgressBar)
+importFrom(graphics,
+  abline,
+  axis,
+  barplot,
+  box,
+  grid,
+  legend,
+  lines,
+  par,
+  plot,
+  plot.new,
+  plot.window,
+  polygon,
+  title
+)
+importFrom(mvtnorm,
+  dmvnorm,
+  rmvnorm
+)
+importFrom(stats,
+  arima,
+  coef,
+  density,
+  dgamma,
+  dnorm,
+  fitted,
+  logLik,
+  optim,
+  predict,
+  quantile,
+  resid,
+  residuals,
+  rnorm,
+  runif,
+  ts,
+  ts.plot,
+  vcov
+)
+importFrom(utils,
+  head,
+  read.table,
+  setTxtProgressBar,
+  tail,
+  txtProgressBar
+)

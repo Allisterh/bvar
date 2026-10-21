@@ -57,7 +57,7 @@ include the horizon and different identification schemes.
 May also be calculated ex-post using \code{\link{irf.bvar}}.}
 }
 \value{
-Returns a list of class \code{bvar_chain} with \code{bvar} objects.
+Returns a list of class \code{bvar_chains} with \code{bvar} objects.
 }
 \description{
 Wrapper for \code{\link{bvar}} to simplify parallel computation via

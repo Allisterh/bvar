@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^Makefile$
 
 ^data/fred_qd_full\.rda$
 ^data/fred_md_full\.rda$
@@ -8,6 +9,7 @@
 ^doc$
 ^Meta$
 ^scripts$
+^scratch$
 
 ^vignettes/.*\.jpg$
 ^vignettes/.*\.png$

@@ -8,7 +8,7 @@
 \format{
 A \code{data.frame} object with dates as rownames.
 
-An object of class \code{data.frame} with 777 rows and 118 columns.
+An object of class \code{data.frame} with 812 rows and 118 columns.
 }
 \source{
 \url{https://research.stlouisfed.org/econ/mccracken/fred-databases/}
@@ -47,7 +47,7 @@ McCracken, M. W. and Ng, S. (2016) FRED-MD: A Monthly Database for
   Macroeconomic Research \bold{w26872}. National Bureau of Economic Research.
 }
 \seealso{
-\code{\link{fred_transform}}
+\code{\link{fred_transform}}, \code{\link{fred_download}}
 }
 \keyword{FRED}
 \keyword{datasets}

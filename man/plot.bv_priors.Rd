@@ -2,7 +2,7 @@
 % Please edit documentation in R/48_priors_plot.R
 \name{plot.bv_priors}
 \alias{plot.bv_priors}
-\title{Plotting method for prior settings}
+\title{Plotting method for priors}
 \usage{
 \method{plot}{bv_priors}(x, mar = c(2, 2, 2, 0.5), ...)
 }
@@ -18,17 +18,10 @@ Returns \emph{x} invisibly.
 }
 \description{
 Plot prior densities configured via \code{\link{bv_priors}}. The method
-mirrors the structure of \code{\link{print.bv_priors}} and draws panels for
-the Minnesota prior first, followed by all configured dummy priors.
+draws panels for the Minnesota prior first, followed by all configured
+dummy priors.
 }
 \examples{
 priors <- bv_priors(hyper = "auto", sur = bv_sur())
 plot(priors)
 }
-\seealso{
-\code{\link{bv_priors}}; \code{\link{print.bv_priors}}
-}
-\keyword{BVAR}
-\keyword{analysis}
-\keyword{plot}
-\keyword{priors}
