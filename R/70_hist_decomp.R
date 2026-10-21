@@ -2,13 +2,18 @@
 #'
 #' Function to compute a historical variance decomposition of a VAR.
 #'
-#' @param x A \code{bvar} object, obtained from \code{\link{bvar}}.
-#' @param type Character scalar. Whether to use median or mean values.
+#' @param x,object A \code{bvar} object, obtained from \code{\link{bvar}}.
+#' @param type Character scalar. Whether to use mean or quantile values.
+#' @param vars_response,vars_shock Optional numeric or character vector. Used
+#' to subset the summary method's outputs to certain response / shock variables
+#' by position or name (must be available). Defaults to \code{NULL}, i.e. all
+#' variables.
 #' @param ... Not used.
 #'
 #' @return Returns a list of class \code{bvar_hd} with elements \code{hd}
 #' (a numerical array of dimensions time, variable, shock), \code{variables}
-#' and \code{type}.
+#' and \code{type}. The summary method returns a list of class
+#' \code{bvar_hd_summary}, which can be used with \code{print}.
 #'
 #' @keywords BVAR historical decomposition hd
 #'
@@ -26,6 +31,9 @@
 #'
 #' # Compute historical decomposition
 #' hist_decomp(x, type = "mean")
+#'
+#' # Summarise the contributions to the first variable
+#' summary(hist_decomp(x, type = "mean"), vars_response = 1)
 #' }
 hist_decomp.bvar <- function(x, type = c("mean", "quantile"), ...) {
   type <- match.arg(type)
@@ -78,6 +86,85 @@ hist_decomp.default <- function(x, ...) {
 }
 
 
+#' @export
+print.bvar_hd <- function(x, ...) {
+  cat(
+    "Numeric array (dimensions ",
+    paste0(dim(x[["hd"]]), collapse = ", "),
+    ") of historical decomposition values from a BVAR.\n",
+    sep = ""
+  )
+  cat("Type: ", x[["type"]], "\n", sep = "")
+  cat("Variables: ", paste(x[["variables"]], collapse = ", "), "\n", sep = "")
+
+  return(invisible(x))
+}
+
+
+#' @rdname hist_decomp.bvar
+#' @export
+summary.bvar_hd <- function(
+  object,
+  vars_response = NULL,
+  vars_shock = NULL,
+  ...
+) {
+  if (!inherits(object, "bvar_hd")) {
+    stop("Please provide a `bvar_hd` object.")
+  }
+
+  hd <- object[["hd"]]
+  M <- dim(hd)[2]
+  variables <- name_deps(object[["variables"]], M = M)
+  pos_res <- pos_vars(vars_response, variables, M)
+  pos_shock <- pos_vars(vars_shock, variables, M)
+
+  out <- structure(
+    list(
+      "hd" = object,
+      "variables" = variables,
+      "pos_res" = pos_res,
+      "pos_shock" = pos_shock
+    ),
+    class = "bvar_hd_summary"
+  )
+
+  return(out)
+}
+
+
+#' @noRd
+#' @export
+print.bvar_hd_summary <- function(x, digits = 2L, ...) {
+  if (!inherits(x, "bvar_hd_summary")) {
+    stop("Please provide a `bvar_hd_summary` object.")
+  }
+
+  print.bvar_hd(x[["hd"]])
+
+  hd <- x[["hd"]][["hd"]]
+  time_names <- dimnames(hd)[["time"]]
+  if (is.null(time_names)) {
+    time_names <- as.character(seq_len(dim(hd)[1]))
+  }
+  shocks <- x[["variables"]][x[["pos_shock"]]]
+
+  for (i in x[["pos_res"]]) {
+    cat("\nHistorical decomposition of ", x[["variables"]][i], ":\n", sep = "")
+    contrib <- hd[, i, x[["pos_shock"]], drop = FALSE]
+    contrib <- matrix(
+      contrib,
+      nrow = dim(hd)[1],
+      ncol = length(x[["pos_shock"]]),
+      dimnames = list(time_names, shocks)
+    )
+    print(round(contrib, digits = digits))
+  }
+
+  return(invisible(x))
+}
+
+
 #' Historical variance decompostions draws
 #'
 #' Computes a historical variance decomposition (HD) using draws of the
@@ -119,5 +206,7 @@ compute_hd <- function(
     }
   }
 
-  return(aperm(hd_decomp, c(2, 3, 1)))
+  # (variable, time, shock) -> (time, variable, shock); shock stays last to
+  # match the ordering used for impulse responses and forecasts
+  return(aperm(hd_decomp, c(2, 1, 3)))
 }

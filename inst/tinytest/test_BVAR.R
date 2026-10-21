@@ -383,6 +383,32 @@ expect_silent(plot(
 ))
 expect_error(plot(hd_mean, vars_response = "not_a_var"))
 
+# HD dimension ordering and print / summary methods
+expect_identical(
+  names(dimnames(hd_mean[["hd"]])),
+  c("time", "variable", "shock")
+)
+# At the first period the contribution of shock j to variable i is
+# chol(vcov)[j, i] * eps[j, 1]; this pins the (time, variable, shock) order
+chol_vcov <- t(chol(vcov(run, type = "mean")))
+eps_first <- solve(chol_vcov, residuals(run, type = "mean")[1, ])
+expect_equal(
+  unname(hd_mean[["hd"]][2, , ]),
+  unname(chol_vcov %*% diag(eps_first))
+)
+expect_silent(print(summary(hd_mean)))
+expect_silent(print(summary(hd_mean, vars_response = 1, vars_shock = 1:2)))
+expect_stdout(
+  print(summary(
+    hd_mean,
+    vars_response = "var1",
+    vars_shock = c("var1", "var2")
+  )),
+  "Historical decomposition of var1"
+)
+expect_error(summary(hd_mean, vars_response = "not_a_var"))
+expect_error(summary(hd_mean, vars_shock = "not_a_var"))
+
 expect_silent(print(rmse(run)))
 expect_silent(print(rmse(run, holdout = data2[1:10, ])))
 expect_silent(print(lps(run)))

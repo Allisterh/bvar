@@ -4,6 +4,7 @@
 \alias{hist_decomp.bvar}
 \alias{hist_decomp}
 \alias{hist_decomp.default}
+\alias{summary.bvar_hd}
 \title{Historical decomposition}
 \usage{
 \method{hist_decomp}{bvar}(x, type = c("mean", "quantile"), ...)
@@ -11,17 +12,26 @@
 hist_decomp(x, ...)
 
 \method{hist_decomp}{default}(x, ...)
+
+\method{summary}{bvar_hd}(object, vars_response = NULL, vars_shock = NULL, ...)
 }
 \arguments{
-\item{x}{A \code{bvar} object, obtained from \code{\link{bvar}}.}
+\item{x, object}{A \code{bvar} object, obtained from \code{\link{bvar}}.}
 
-\item{type}{Character scalar. Whether to use median or mean values.}
+\item{type}{Character scalar. Whether to use mean or quantile values.}
 
 \item{...}{Not used.}
+
+\item{vars_response, vars_shock}{Optional numeric or character vector. Used
+to subset the summary method's outputs to certain response / shock variables
+by position or name (must be available). Defaults to \code{NULL}, i.e. all
+variables.}
 }
 \value{
-Returns a numerical array (time, variable, shock) with the results
-of the historical decomposition.
+Returns a list of class \code{bvar_hd} with elements \code{hd}
+(a numerical array of dimensions time, variable, shock), \code{variables}
+and \code{type}. The summary method returns a list of class
+\code{bvar_hd_summary}, which can be used with \code{print}.
 }
 \description{
 Function to compute a historical variance decomposition of a VAR.
@@ -38,6 +48,9 @@ x <- bvar(data, lags = 1, n_draw = 600L, n_burn = 100L, verbose = FALSE)
 
 # Compute historical decomposition
 hist_decomp(x, type = "mean")
+
+# Summarise the contributions to the first variable
+summary(hist_decomp(x, type = "mean"), vars_response = 1)
 }
 }
 \keyword{BVAR}
