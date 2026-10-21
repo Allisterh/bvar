@@ -5,8 +5,13 @@ R         := Rscript
 RUN_TESTS := RUN_TESTS=true BVAR_RUN_TESTS=true
 CHECK_ENV := _R_CHECK_FORCE_SUGGESTS_=false
 VIGNETTES := --no-build-vignettes  # override with empty value if LaTeX is available
+# Load local tokens (e.g. GOCOV_TOKEN) from .env when present.
+ifneq (,$(wildcard .env))
+include .env
+export GOCOV_TOKEN
+endif
 
-.PHONY: all document install build check test coverage clean
+.PHONY: all document install build check test coverage upload clean
 
 all: check coverage
 
@@ -28,6 +33,9 @@ test: install
 coverage:
 	@mkdir -p scratch
 	$(RUN_TESTS) $(R) -e 'cov <- covr::package_coverage(); print(cov); covr::to_cobertura(cov, filename = "scratch/coverage.xml")'
+
+upload:
+	go run github.com/gocov/gocov/cmd/gocov@latest upload -format cobertura scratch/coverage.xml
 
 clean:
 	rm -rf $(PKG)_*.tar.gz $(PKG).Rcheck scratch/coverage.xml

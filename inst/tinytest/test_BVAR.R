@@ -263,9 +263,14 @@ expect_error(
     lags = 1,
     priors = bv_priors(
       hyper = "lambda",
-      mn = bv_mn(lambda = bv_lambda(
-        mode = 1e4, sd = 1e4, min = 1e4, max = 1e12
-      ))
+      mn = bv_mn(
+        lambda = bv_lambda(
+          mode = 1e4,
+          sd = 1e4,
+          min = 1e4,
+          max = 1e12
+        )
+      )
     ),
     mh = bv_mh(proposal_scale = "diag"),
     n_draw = 100L,
@@ -282,6 +287,28 @@ expect_error(
 expect_silent(predict(run) <- predict(run, opt_fcast1))
 expect_silent(fcasts1 <- predict(run))
 expect_silent(fcasts2 <- predict(run2))
+
+# Single constrained observation
+expect_silent(
+  fcast_single <- predict(
+    run2,
+    bv_fcast(
+      cond_path = c(2),
+      cond_vars = 1
+    )
+  )
+)
+expect_true(all(is.finite(fcast_single[["fcast"]])))
+expect_silent(
+  fcast_single_na <- predict(
+    run2,
+    bv_fcast(
+      cond_path = c(2, NA),
+      cond_vars = 1
+    )
+  )
+)
+expect_true(all(is.finite(fcast_single_na[["fcast"]])))
 
 expect_silent(print(fcasts1))
 expect_silent(print(summary(fcasts1)))

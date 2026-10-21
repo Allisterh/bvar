@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^Makefile$
+^\.env$
 
 ^data/fred_qd_full\.rda$
 ^data/fred_md_full\.rda$

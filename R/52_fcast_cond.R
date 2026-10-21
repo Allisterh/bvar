@@ -44,7 +44,7 @@ cond_fcast <- function(constr_mat, fcast_base, ortho_irf, horizon, M) {
 
   R_svd <- svd(R, nu = nrow(R), nv = ncol(R))
   U <- R_svd[["u"]]
-  P_inv <- diag(1 / R_svd[["d"]])
+  P_inv <- diag(1 / R_svd[["d"]], nrow = v)
   V1 <- R_svd[["v"]][, 1:v]
   V2 <- R_svd[["v"]][, (v + 1):s]
   eta <- V1 %*% P_inv %*% t(U) %*% r + V2 %*% rnorm(s - v)

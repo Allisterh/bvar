@@ -1,4 +1,10 @@
 
+# v1.1.1, Internal Release
+
+- Fix conditional forecasts with a single restriction
+  - Failed due to `diag()` shenanigans
+
+
 # v1.1.0, Internal Release
 
 - Add `fred_download()` to help read up-to-date vintages from the web
